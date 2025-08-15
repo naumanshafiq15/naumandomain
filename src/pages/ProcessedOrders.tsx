@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -169,12 +170,29 @@ export default function ProcessedOrders() {
             </div>
             <div className="grid w-full max-w-sm items-center gap-1.5">
               <Label htmlFor="source">Source</Label>
-              <Input
-                id="source"
+              <Select
                 value={filters.source}
-                onChange={(e) => setFilters(prev => ({ ...prev, source: e.target.value }))}
-                placeholder="e.g., DIRECT"
-              />
+                onValueChange={(value) => setFilters(prev => ({ ...prev, source: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DIRECT">DIRECT</SelectItem>
+                  <SelectItem value="AMAZON">AMAZON</SelectItem>
+                  <SelectItem value="Mirakl MP">Mirakl MP</SelectItem>
+                  <SelectItem value="EBAY">EBAY</SelectItem>
+                  <SelectItem value="Manomano hub">Manomano hub</SelectItem>
+                  <SelectItem value="OnBuy v2">OnBuy v2</SelectItem>
+                  <SelectItem value="VIRTUALSTOCK">VIRTUALSTOCK</SelectItem>
+                  <SelectItem value="SHEIN">SHEIN</SelectItem>
+                  <SelectItem value="SHOPIFY">SHOPIFY</SelectItem>
+                  <SelectItem value="TESCO">TESCO</SelectItem>
+                  <SelectItem value="TheRange">TheRange</SelectItem>
+                  <SelectItem value="TikTok">TikTok</SelectItem>
+                  <SelectItem value="WAYFAIRCHANNEL">WAYFAIRCHANNEL</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Button type="submit" disabled={isLoading}>
               Apply Filters
