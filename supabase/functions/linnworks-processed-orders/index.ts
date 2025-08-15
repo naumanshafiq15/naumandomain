@@ -37,7 +37,7 @@ serve(async (req) => {
     console.log('Making request to Linnworks API with token:', authToken);
     console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
-    const response = await fetch('https://api.linnworks.net/api/Orders/GetOrdersByFilter', {
+    const response = await fetch('https://eu-ext.linnworks.net/api/ProcessedOrders/SearchProcessedOrders', {
       method: 'POST',
       headers: {
         'Authorization': authToken,
