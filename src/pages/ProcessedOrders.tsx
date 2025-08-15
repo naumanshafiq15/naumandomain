@@ -11,19 +11,15 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProcessedOrder {
+  nOrderId: string;
   pkOrderID: string;
-  dReceivedDate: string;
-  dProcessedOn: string;
-  fTotalCharge: number;
-  cCurrency: string;
-  PostalTrackingNumber: string;
-  cCountry: string;
-  Source: string;
   ReferenceNum: string;
-  cFullName: string;
-  cEmailAddress: string;
-  Town: string;
-  cPostCode: string;
+  Subtotal: string;
+  fTotalCharge: string;
+  PostalServiceName: string;
+  Source: string;
+  SubSource: string;
+  fTax: string;
 }
 
 interface ProcessedOrdersResponse {
@@ -111,16 +107,6 @@ export default function ProcessedOrders() {
     fetchOrders(1);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: currency || 'GBP',
-    }).format(amount);
-  };
 
   if (authLoading) {
     return (
@@ -212,45 +198,45 @@ export default function ProcessedOrders() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Order ID</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Tracking</TableHead>
+                  <TableHead>PK Order ID</TableHead>
+                  <TableHead>Reference Number</TableHead>
+                  <TableHead>Subtotal</TableHead>
+                  <TableHead>Total Charge</TableHead>
+                  <TableHead>Postal Service</TableHead>
                   <TableHead>Source</TableHead>
-                  <TableHead>Processed Date</TableHead>
-                  <TableHead>Location</TableHead>
+                  <TableHead>Sub Source</TableHead>
+                  <TableHead>Tax</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {orders.map((order) => (
                   <TableRow key={order.pkOrderID}>
                     <TableCell className="font-medium">
+                      {order.nOrderId}
+                    </TableCell>
+                    <TableCell>
+                      {order.pkOrderID}
+                    </TableCell>
+                    <TableCell>
                       {order.ReferenceNum}
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">{order.cFullName}</div>
-                        <div className="text-sm text-muted-foreground">{order.cEmailAddress}</div>
-                      </div>
+                      {order.Subtotal}
                     </TableCell>
                     <TableCell>
-                      {formatCurrency(order.fTotalCharge, order.cCurrency)}
+                      {order.fTotalCharge}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">
-                        {order.PostalTrackingNumber || 'N/A'}
-                      </Badge>
+                      {order.PostalServiceName}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{order.Source}</Badge>
                     </TableCell>
-                    <TableCell>{formatDate(order.dProcessedOn)}</TableCell>
                     <TableCell>
-                      <div>
-                        <div>{order.Town}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {order.cPostCode}, {order.cCountry}
-                        </div>
-                      </div>
+                      {order.SubSource}
+                    </TableCell>
+                    <TableCell>
+                      {order.fTax}
                     </TableCell>
                   </TableRow>
                 ))}
