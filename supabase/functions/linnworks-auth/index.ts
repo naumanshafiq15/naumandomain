@@ -21,8 +21,11 @@ serve(async (req) => {
     }
 
     console.log('Making auth request with credentials...');
+    console.log('ApplicationId exists:', !!applicationId);
+    console.log('ApplicationSecret exists:', !!applicationSecret);
+    console.log('Token exists:', !!token);
     
-    const authResponse = await fetch('https://eu-ext.linnworks.net/api/Auth/AuthorizeByApplication', {
+    const authResponse = await fetch('https://api.linnworks.net/api/Auth/AuthorizeByApplication', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
