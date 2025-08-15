@@ -20,23 +20,29 @@ serve(async (req) => {
       throw new Error('Missing Linnworks credentials');
     }
 
+    console.log('Making auth request with credentials...');
+    
     const authResponse = await fetch('https://eu-ext.linnworks.net/api/Auth/AuthorizeByApplication', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        applicationId,
-        applicationSecret,
-        token
+        ApplicationId: applicationId,
+        ApplicationSecret: applicationSecret,
+        Token: token
       }),
     });
 
+    console.log('Auth response status:', authResponse.status);
+    const responseText = await authResponse.text();
+    console.log('Auth response body:', responseText);
+
     if (!authResponse.ok) {
-      throw new Error(`Authentication failed: ${authResponse.statusText}`);
+      throw new Error(`Authentication failed: ${authResponse.status} - ${responseText}`);
     }
 
-    const authData = await authResponse.json();
+    const authData = JSON.parse(responseText);
     console.log('Authentication successful:', authData);
 
     return new Response(JSON.stringify({ token: authData.Token }), {
