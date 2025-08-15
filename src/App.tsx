@@ -17,7 +17,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={
+            <DashboardLayout>
+              <Index />
+            </DashboardLayout>
+          } />
           <Route path="/processed-orders" element={
             <DashboardLayout>
               <ProcessedOrders />
