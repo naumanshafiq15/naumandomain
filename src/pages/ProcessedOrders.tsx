@@ -108,6 +108,12 @@ export default function ProcessedOrders() {
     fetchOrders(1);
   };
 
+  const handleRefresh = async () => {
+    // First authenticate to get a fresh token
+    await authenticate();
+    // The useEffect will automatically call fetchOrders when the new authToken is received
+  };
+
 
   if (authLoading) {
     return (
@@ -134,8 +140,8 @@ export default function ProcessedOrders() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Processed Orders - Linnworks Data</h1>
-        <Button onClick={() => fetchOrders(pagination.pageNumber)} disabled={isLoading}>
-          {isLoading ? (
+        <Button onClick={handleRefresh} disabled={isLoading || authLoading}>
+          {isLoading || authLoading ? (
             <Loader2 className="h-4 w-4 animate-spin mr-2" />
           ) : (
             <RefreshCw className="h-4 w-4 mr-2" />
