@@ -31,9 +31,9 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        ApplicationId: applicationId,
-        ApplicationSecret: applicationSecret,
-        Token: token
+        applicationId: applicationId,
+        applicationSecret: applicationSecret,
+        token: token
       }),
     });
 

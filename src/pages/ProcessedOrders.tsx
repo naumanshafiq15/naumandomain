@@ -126,12 +126,23 @@ export default function ProcessedOrders() {
 
   if (authError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-        <p className="text-destructive">Authentication failed: {authError}</p>
-        <Button onClick={authenticate}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Retry Authentication
-        </Button>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Processed Orders - Linnworks Data</h1>
+          <Button onClick={handleRefresh} disabled={authLoading}>
+            {authLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            Refresh
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-muted-foreground">Click refresh to authenticate and load orders.</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
