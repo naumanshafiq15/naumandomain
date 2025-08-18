@@ -16,25 +16,29 @@ serve(async (req) => {
     const applicationSecret = Deno.env.get('LINNWORKS_APPLICATION_SECRET');
     const token = Deno.env.get('LINNWORKS_TOKEN');
 
+    console.log('=== LINNWORKS AUTH DEBUG ===');
+    console.log('ApplicationId:', applicationId);
+    console.log('ApplicationSecret:', applicationSecret);
+    console.log('Token:', token);
+
     if (!applicationId || !applicationSecret || !token) {
       throw new Error('Missing Linnworks credentials');
     }
 
-    console.log('Making auth request with credentials...');
-    console.log('ApplicationId exists:', !!applicationId);
-    console.log('ApplicationSecret exists:', !!applicationSecret);
-    console.log('Token exists:', !!token);
+    const requestBody = {
+      applicationId: applicationId,
+      applicationSecret: applicationSecret,
+      token: token
+    };
+    
+    console.log('Request body being sent:', JSON.stringify(requestBody, null, 2));
     
     const authResponse = await fetch('https://api.linnworks.net/api/Auth/AuthorizeByApplication', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        applicationId: applicationId,
-        applicationSecret: applicationSecret,
-        token: token
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     console.log('Auth response status:', authResponse.status);
@@ -46,7 +50,7 @@ serve(async (req) => {
     }
 
     const authData = JSON.parse(responseText);
-    console.log('Authentication successful:', authData);
+    console.log('Authentication successful, returning token:', authData.Token);
 
     return new Response(JSON.stringify({ token: authData.Token }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
