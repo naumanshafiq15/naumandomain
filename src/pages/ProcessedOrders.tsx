@@ -21,6 +21,7 @@ interface ProcessedOrder {
   Source: string;
   SubSource: string;
   fTax: string;
+  dProcessedOn: string;
 }
 
 interface ProcessedOrdersResponse {

@@ -4,8 +4,8 @@ import { Package, ShoppingCart, TrendingUp, Settings } from "lucide-react";
 
 const navigation = [
   { name: "Processed Orders", href: "/processed-orders", icon: Package },
-  { name: "Page 2", href: "/page-2", icon: ShoppingCart },
-  { name: "Page 3", href: "/page-3", icon: TrendingUp },
+  { name: "Profit Calculator", href: "/profit-calculator", icon: TrendingUp },
+  { name: "Page 3", href: "/page-3", icon: ShoppingCart },
   { name: "Page 4", href: "/page-4", icon: Settings },
 ];
 
