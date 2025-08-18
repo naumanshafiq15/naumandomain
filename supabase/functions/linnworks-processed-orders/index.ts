@@ -56,14 +56,6 @@ serve(async (req) => {
     const data = await response.json();
     console.log('Successfully fetched processed orders:', data);
 
-    // Ensure dProcessedOn is included in the response data
-    if (data.ProcessedOrders?.Data) {
-      data.ProcessedOrders.Data = data.ProcessedOrders.Data.map((order: any) => ({
-        ...order,
-        dProcessedOn: order.dProcessedOn || order.dReceivedDate // fallback to received date if processed date not available
-      }));
-    }
-
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
