@@ -56,8 +56,8 @@ export default function ProfitCalculator() {
   const [allOrders, setAllOrders] = useState<ProcessedOrder[]>([]);
   const [profitData, setProfitData] = useState<MonthlyProfitData[]>([]);
   const [filters, setFilters] = useState({
-    fromDate: "2025-01-01",
-    toDate: "2025-12-31",
+    fromMonth: "2025-01",
+    toMonth: "2025-12",
     selectedSources: ["AMAZON"] as string[], // Start with just Amazon
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -73,6 +73,8 @@ export default function ProfitCalculator() {
     if (!authToken) return;
 
     setIsLoading(true);
+    setAllOrders([]); // Clear previous data
+    setProfitData([]); // Clear previous profit data
     const allOrdersData: ProcessedOrder[] = [];
 
     try {
@@ -95,8 +97,8 @@ export default function ProfitCalculator() {
               ],
               pageNumber,
               resultsPerPage: 200,
-              fromDate: `${filters.fromDate}T00:00:00`,
-              toDate: `${filters.toDate}T23:59:59`,
+              fromDate: `${filters.fromMonth}-01T00:00:00`,
+              toDate: `${filters.toMonth}-31T23:59:59`,
             },
           });
 
@@ -146,7 +148,10 @@ export default function ProfitCalculator() {
     const monthlyData: { [key: string]: MonthlyProfitData } = {};
 
     orders.forEach(order => {
-      const month = formatMonth(order.dProcessedOn);
+      if (!order.dProcessedOn) return; // Skip orders without processed date
+      
+      const orderDate = new Date(order.dProcessedOn);
+      const month = orderDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
       const source = order.Source;
       const key = `${source}-${month}`;
 
@@ -179,7 +184,10 @@ export default function ProfitCalculator() {
 
     setProfitData(Object.values(monthlyData).sort((a, b) => {
       if (a.source === b.source) {
-        return new Date(a.month).getTime() - new Date(b.month).getTime();
+        // Sort by date properly
+        const dateA = new Date(a.month + " 1");
+        const dateB = new Date(b.month + " 1");
+        return dateA.getTime() - dateB.getTime();
       }
       return a.source.localeCompare(b.source);
     }));
@@ -268,21 +276,21 @@ export default function ProfitCalculator() {
           <form onSubmit={handleFilterSubmit} className="space-y-4">
             <div className="flex gap-4">
               <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Label htmlFor="fromDate">From Date</Label>
+                <Label htmlFor="fromMonth">From Month</Label>
                 <Input
-                  type="date"
-                  id="fromDate"
-                  value={filters.fromDate}
-                  onChange={(e) => setFilters(prev => ({ ...prev, fromDate: e.target.value }))}
+                  type="month"
+                  id="fromMonth"
+                  value={filters.fromMonth}
+                  onChange={(e) => setFilters(prev => ({ ...prev, fromMonth: e.target.value }))}
                 />
               </div>
               <div className="grid w-full max-w-sm items-center gap-1.5">
-                <Label htmlFor="toDate">To Date</Label>
+                <Label htmlFor="toMonth">To Month</Label>
                 <Input
-                  type="date"
-                  id="toDate"
-                  value={filters.toDate}
-                  onChange={(e) => setFilters(prev => ({ ...prev, toDate: e.target.value }))}
+                  type="month"
+                  id="toMonth"
+                  value={filters.toMonth}
+                  onChange={(e) => setFilters(prev => ({ ...prev, toMonth: e.target.value }))}
                 />
               </div>
             </div>
