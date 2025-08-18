@@ -12,8 +12,8 @@ const dashboardPages = [
     color: "text-blue-600",
   },
   {
-    title: "Page 2",
-    description: "Additional dashboard page (coming soon)",
+    title: "Profit Calculator",
+    description: "Monthly profit analysis by source with detailed metrics",
     href: "/page-2",
     icon: ShoppingCart,
     color: "text-green-600",
