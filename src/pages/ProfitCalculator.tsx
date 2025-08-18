@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useLinnworksAuth } from "@/hooks/use-linnworks-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, RefreshCw, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -51,6 +51,21 @@ const sources = [
 
 const COST_PERCENTAGE = 0.70; // 70% cost, 30% profit margin
 
+// Generate month options for the last 24 months
+const generateMonthOptions = () => {
+  const options = [];
+  const now = new Date();
+  
+  for (let i = 0; i < 24; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const label = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+    options.push({ value, label });
+  }
+  
+  return options;
+};
+
 export default function ProfitCalculator() {
   const { authToken, isLoading: authLoading, error: authError, authenticate } = useLinnworksAuth();
   const [allOrders, setAllOrders] = useState<ProcessedOrder[]>([]);
@@ -84,8 +99,8 @@ export default function ProfitCalculator() {
         let pageNumber = 1;
         let hasMorePages = true;
 
-        // Limit to first 3 pages per source for faster loading
-        while (hasMorePages && pageNumber <= 3) {
+        // Fetch all pages within the date range
+        while (hasMorePages) {
           const { data, error } = await supabase.functions.invoke('linnworks-processed-orders', {
             body: {
               authToken,
@@ -115,8 +130,8 @@ export default function ProfitCalculator() {
             setAllOrders([...allOrdersData]);
             processProfitData([...allOrdersData]);
             
-            // Check if there are more pages (but limit to 3 for speed)
-            hasMorePages = pageNumber < response.ProcessedOrders.TotalPages && pageNumber < 3;
+            // Check if there are more pages
+            hasMorePages = pageNumber < response.ProcessedOrders.TotalPages;
             pageNumber++;
           } else {
             hasMorePages = false;
@@ -147,6 +162,7 @@ export default function ProfitCalculator() {
   const processProfitData = (orders: ProcessedOrder[]) => {
     const monthlyData: { [key: string]: MonthlyProfitData } = {};
 
+    // First, populate with actual order data
     orders.forEach(order => {
       if (!order.dProcessedOn) return; // Skip orders without processed date
       
@@ -175,6 +191,33 @@ export default function ProfitCalculator() {
       monthlyData[key].ordersNumber += 1;
       monthlyData[key].ordersValue += totalCharge;
       monthlyData[key].profit += calculatedProfit;
+    });
+
+    // Fill in missing months with zero data
+    const fromDate = new Date(filters.fromMonth + "-01");
+    const toDate = new Date(filters.toMonth + "-01");
+    
+    filters.selectedSources.forEach(source => {
+      let currentDate = new Date(fromDate);
+      
+      while (currentDate <= toDate) {
+        const month = currentDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+        const key = `${source}-${month}`;
+        
+        if (!monthlyData[key]) {
+          monthlyData[key] = {
+            source,
+            month,
+            ordersNumber: 0,
+            ordersValue: 0,
+            profit: 0,
+            percentage: 0,
+          };
+        }
+        
+        // Move to next month
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
     });
 
     // Calculate percentages
@@ -277,26 +320,44 @@ export default function ProfitCalculator() {
             <div className="flex gap-4">
               <div className="grid w-full max-w-sm items-center gap-1.5">
                 <Label htmlFor="fromMonth">From Month</Label>
-                <Input
-                  type="month"
-                  id="fromMonth"
+                <Select
                   value={filters.fromMonth}
-                  onChange={(e) => setFilters(prev => ({ ...prev, fromMonth: e.target.value }))}
-                />
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, fromMonth: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select from month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {generateMonthOptions().map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid w-full max-w-sm items-center gap-1.5">
                 <Label htmlFor="toMonth">To Month</Label>
-                <Input
-                  type="month"
-                  id="toMonth"
+                <Select
                   value={filters.toMonth}
-                  onChange={(e) => setFilters(prev => ({ ...prev, toMonth: e.target.value }))}
-                />
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, toMonth: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select to month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {generateMonthOptions().map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label>Select Sources (max 3 for faster loading)</Label>
+              <Label>Select Sources (max 3 sources recommended)</Label>
               <div className="grid grid-cols-3 gap-2">
                 {sources.slice(0, 9).map((source) => (
                   <label key={source} className="flex items-center space-x-2 text-sm">
