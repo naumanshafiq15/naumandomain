@@ -58,8 +58,10 @@ export default function ProfitCalculator() {
   const [filters, setFilters] = useState({
     fromDate: "2025-01-01",
     toDate: "2025-12-31",
+    selectedSources: ["AMAZON"] as string[], // Start with just Amazon
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [currentlyFetching, setCurrentlyFetching] = useState<string>("");
   const { toast } = useToast();
 
   const formatMonth = (dateString: string): string => {
@@ -74,12 +76,14 @@ export default function ProfitCalculator() {
     const allOrdersData: ProcessedOrder[] = [];
 
     try {
-      // Fetch orders from all sources
-      for (const source of sources) {
+      // Fetch orders only from selected sources
+      for (const source of filters.selectedSources) {
+        setCurrentlyFetching(`Loading ${source}...`);
         let pageNumber = 1;
         let hasMorePages = true;
 
-        while (hasMorePages) {
+        // Limit to first 3 pages per source for faster loading
+        while (hasMorePages && pageNumber <= 3) {
           const { data, error } = await supabase.functions.invoke('linnworks-processed-orders', {
             body: {
               authToken,
@@ -105,8 +109,12 @@ export default function ProfitCalculator() {
           if (response.ProcessedOrders && response.ProcessedOrders.Data) {
             allOrdersData.push(...response.ProcessedOrders.Data);
             
-            // Check if there are more pages
-            hasMorePages = pageNumber < response.ProcessedOrders.TotalPages;
+            // Update data progressively
+            setAllOrders([...allOrdersData]);
+            processProfitData([...allOrdersData]);
+            
+            // Check if there are more pages (but limit to 3 for speed)
+            hasMorePages = pageNumber < response.ProcessedOrders.TotalPages && pageNumber < 3;
             pageNumber++;
           } else {
             hasMorePages = false;
@@ -114,16 +122,15 @@ export default function ProfitCalculator() {
         }
       }
 
-      setAllOrders(allOrdersData);
-      processProfitData(allOrdersData);
-
+      setCurrentlyFetching("");
       toast({
         title: "Data loaded successfully",
-        description: `Loaded ${allOrdersData.length} orders from all sources`,
+        description: `Loaded ${allOrdersData.length} orders from ${filters.selectedSources.length} sources`,
       });
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch orders';
+      setCurrentlyFetching("");
       toast({
         title: "Error fetching orders",
         description: errorMessage,
@@ -131,6 +138,7 @@ export default function ProfitCalculator() {
       });
     } finally {
       setIsLoading(false);
+      setCurrentlyFetching("");
     }
   };
 
@@ -254,33 +262,68 @@ export default function ProfitCalculator() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Date Range</CardTitle>
+          <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleFilterSubmit} className="flex items-end gap-4">
-            <div className="grid w-full max-w-sm items-center gap-1.5">
-              <Label htmlFor="fromDate">From Date</Label>
-              <Input
-                type="date"
-                id="fromDate"
-                value={filters.fromDate}
-                onChange={(e) => setFilters(prev => ({ ...prev, fromDate: e.target.value }))}
-              />
+          <form onSubmit={handleFilterSubmit} className="space-y-4">
+            <div className="flex gap-4">
+              <div className="grid w-full max-w-sm items-center gap-1.5">
+                <Label htmlFor="fromDate">From Date</Label>
+                <Input
+                  type="date"
+                  id="fromDate"
+                  value={filters.fromDate}
+                  onChange={(e) => setFilters(prev => ({ ...prev, fromDate: e.target.value }))}
+                />
+              </div>
+              <div className="grid w-full max-w-sm items-center gap-1.5">
+                <Label htmlFor="toDate">To Date</Label>
+                <Input
+                  type="date"
+                  id="toDate"
+                  value={filters.toDate}
+                  onChange={(e) => setFilters(prev => ({ ...prev, toDate: e.target.value }))}
+                />
+              </div>
             </div>
-            <div className="grid w-full max-w-sm items-center gap-1.5">
-              <Label htmlFor="toDate">To Date</Label>
-              <Input
-                type="date"
-                id="toDate"
-                value={filters.toDate}
-                onChange={(e) => setFilters(prev => ({ ...prev, toDate: e.target.value }))}
-              />
+            
+            <div className="space-y-2">
+              <Label>Select Sources (max 3 for faster loading)</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {sources.slice(0, 9).map((source) => (
+                  <label key={source} className="flex items-center space-x-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={filters.selectedSources.includes(source)}
+                      onChange={(e) => {
+                        if (e.target.checked && filters.selectedSources.length < 3) {
+                          setFilters(prev => ({ 
+                            ...prev, 
+                            selectedSources: [...prev.selectedSources, source] 
+                          }));
+                        } else if (!e.target.checked) {
+                          setFilters(prev => ({ 
+                            ...prev, 
+                            selectedSources: prev.selectedSources.filter(s => s !== source) 
+                          }));
+                        }
+                      }}
+                      disabled={!filters.selectedSources.includes(source) && filters.selectedSources.length >= 3}
+                      className="rounded border-gray-300"
+                    />
+                    <span className={!filters.selectedSources.includes(source) && filters.selectedSources.length >= 3 ? "text-gray-400" : ""}>
+                      {source}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
-            <Button type="submit" disabled={isLoading}>
+            
+            <Button type="submit" disabled={isLoading || filters.selectedSources.length === 0}>
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
-              Load Data
+              Load Data ({filters.selectedSources.length} sources)
             </Button>
           </form>
         </CardContent>
@@ -292,7 +335,8 @@ export default function ProfitCalculator() {
             <CardTitle className="flex items-center justify-between">
               <span>Monthly Profit Analysis by Source</span>
               <Badge variant="outline">
-                {Object.keys(groupedData).length} Sources, {allOrders.length} Total Orders
+                {Object.keys(groupedData).length} Sources, {allOrders.length} Orders
+                {currentlyFetching && ` - ${currentlyFetching}`}
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -349,7 +393,7 @@ export default function ProfitCalculator() {
         <Card>
           <CardContent className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin mr-2" />
-            <span>Loading profit data from all sources...</span>
+            <span>{currentlyFetching || "Loading profit data..."}</span>
           </CardContent>
         </Card>
       )}
