@@ -444,7 +444,7 @@ export default function ProcessedOrders() {
                   <TableHead>Customer</TableHead>
                   <TableHead>Country</TableHead>
                   <TableHead>Source</TableHead>
-                  <TableHead>Total</TableHead>
+                  <TableHead>Selling Price (Inc. VAT)</TableHead>
                   <TableHead>Currency</TableHead>
                   <TableHead>Received Date</TableHead>
                   <TableHead>Processed Date</TableHead>
