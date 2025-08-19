@@ -110,7 +110,8 @@ export default function ProcessedOrders() {
   const [filters, setFilters] = useState({
     fromDate: "2025-05-01",
     toDate: "2025-09-01",
-    source: "DIRECT"
+    source: "DIRECT",
+    subSource: ""
   });
   const {
     toast
@@ -328,16 +329,27 @@ export default function ProcessedOrders() {
     if (!authToken) return;
     setIsLoading(true);
     try {
+      // Build search filters based on user input
+      const searchFilters = [{
+        SearchField: "Source",
+        SearchTerm: filters.source
+      }];
+      
+      // Add SubSource filter if specified
+      if (filters.subSource.trim()) {
+        searchFilters.push({
+          SearchField: "SubSource",
+          SearchTerm: filters.subSource
+        });
+      }
+
       const {
         data,
         error
       } = await supabase.functions.invoke('linnworks-processed-orders', {
         body: {
           authToken,
-          searchFilters: [{
-            SearchField: "Source",
-            SearchTerm: filters.source
-          }],
+          searchFilters,
           pageNumber,
           resultsPerPage: 200,
           fromDate: `${filters.fromDate}T00:00:00`,
@@ -610,6 +622,19 @@ export default function ProcessedOrders() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+              <Label htmlFor="subSource">Sub Source (optional)</Label>
+              <Input 
+                type="text" 
+                id="subSource" 
+                placeholder="e.g., RobertDayas, Wilko" 
+                value={filters.subSource} 
+                onChange={e => setFilters(prev => ({
+                  ...prev,
+                  subSource: e.target.value
+                }))} 
+              />
+            </div>
             <Button type="submit" disabled={isLoading}>
               Apply Filters
             </Button>
@@ -639,6 +664,7 @@ export default function ProcessedOrders() {
                 <TableRow>
                   <TableHead>Order ID</TableHead>
                   <TableHead>Source</TableHead>
+                  <TableHead>Sub Source</TableHead>
                   <TableHead>Selling Price (Inc. VAT)</TableHead>
                   <TableHead>Processed Date</TableHead>
                   {showEnhancedColumns && <>
@@ -660,6 +686,13 @@ export default function ProcessedOrders() {
                     <TableCell className="font-mono text-xs">{order.nOrderId}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">{order.Source}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {order.SubSource ? (
+                        <Badge variant="outline" className="text-xs">{order.SubSource}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">-</span>
+                      )}
                     </TableCell>
                     <TableCell>{order.fTotalCharge?.toFixed(2)}</TableCell>
                     <TableCell>{new Date(order.dProcessedOn).toLocaleDateString()}</TableCell>
