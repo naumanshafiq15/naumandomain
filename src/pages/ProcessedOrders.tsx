@@ -606,6 +606,7 @@ export default function ProcessedOrders() {
                   <SelectItem value="TheRange">TheRange</SelectItem>
                   <SelectItem value="TikTok">TikTok</SelectItem>
                   <SelectItem value="WAYFAIRCHANNEL">WAYFAIRCHANNEL</SelectItem>
+                  <SelectItem value="GROUPON">GROUPON</SelectItem>
                 </SelectContent>
               </Select>
             </div>
