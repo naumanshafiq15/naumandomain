@@ -18,14 +18,25 @@ serve(async (req) => {
       throw new Error('Authorization token is required');
     }
 
+    // Map certain search terms to use SubSource field instead of Source
+    const mappedSearchFilters = searchFilters?.map((filter: any) => {
+      if (filter.SearchField === "Source" && (filter.SearchTerm === "Wilko" || filter.SearchTerm === "RobertDayas")) {
+        return {
+          SearchField: "SubSource",
+          SearchTerm: filter.SearchTerm
+        };
+      }
+      return filter;
+    }) || [
+      {
+        SearchField: "Source",
+        SearchTerm: "DIRECT"
+      }
+    ];
+
     const requestBody = {
       request: {
-        SearchFilters: searchFilters || [
-          {
-            SearchField: "Source",
-            SearchTerm: "DIRECT"
-          }
-        ],
+        SearchFilters: mappedSearchFilters,
         PageNumber: pageNumber,
         ResultsPerPage: resultsPerPage,
         FromDate: fromDate || "2025-05-01T00:00:00",
