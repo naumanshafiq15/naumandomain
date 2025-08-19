@@ -8,8 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface ProcessedOrder {
   pkOrderID: string;
@@ -112,8 +116,8 @@ export default function ProcessedOrders() {
     totalPages: 0
   });
   const [filters, setFilters] = useState({
-    fromDate: "2025-05-01",
-    toDate: "2025-09-01",
+    fromDate: new Date("2025-05-01"),
+    toDate: new Date("2025-09-01"),
     source: "DIRECT",
     subSource: "all"
   });
@@ -357,8 +361,8 @@ export default function ProcessedOrders() {
           searchFilters,
           pageNumber,
           resultsPerPage: 200,
-          fromDate: `${filters.fromDate}T00:00:00`,
-          toDate: `${filters.toDate}T00:00:00`
+          fromDate: `${format(filters.fromDate, "yyyy-MM-dd")}T00:00:00`,
+          toDate: `${format(filters.toDate, "yyyy-MM-dd")}T00:00:00`
         }
       });
       if (error) {
@@ -595,18 +599,78 @@ export default function ProcessedOrders() {
         <CardContent>
           <form onSubmit={handleFilterSubmit} className="flex items-end gap-4">
             <div className="grid w-full max-w-sm items-center gap-1.5">
-              <Label htmlFor="fromDate">From Date</Label>
-              <Input type="date" id="fromDate" value={filters.fromDate} onChange={e => setFilters(prev => ({
-              ...prev,
-              fromDate: e.target.value
-            }))} />
+              <Label>From Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !filters.fromDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {filters.fromDate ? format(filters.fromDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={filters.fromDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setFilters(prev => ({
+                          ...prev,
+                          fromDate: date
+                        }));
+                      }
+                    }}
+                    disabled={(date) => {
+                      // Disable dates that are the same as toDate or after toDate
+                      return date >= filters.toDate;
+                    }}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="grid w-full max-w-sm items-center gap-1.5">
-              <Label htmlFor="toDate">To Date</Label>
-              <Input type="date" id="toDate" value={filters.toDate} onChange={e => setFilters(prev => ({
-              ...prev,
-              toDate: e.target.value
-            }))} />
+              <Label>To Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !filters.toDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {filters.toDate ? format(filters.toDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={filters.toDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setFilters(prev => ({
+                          ...prev,
+                          toDate: date
+                        }));
+                      }
+                    }}
+                    disabled={(date) => {
+                      // Disable dates that are the same as fromDate or before fromDate
+                      return date <= filters.fromDate;
+                    }}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="grid w-full max-w-sm items-center gap-1.5">
               <Label htmlFor="source">Source</Label>
