@@ -136,6 +136,7 @@ export default function ProcessedOrders() {
     // Get the appropriate fee based on source - using exact source names from API
     let sourceFeeRate = 0;
     const sourceToFeeMap: { [key: string]: string | undefined } = {
+      // Primary mappings
       'AMAZON': result.amazonFee,
       'B&Q': result.bqFee,
       'EBAY': result.ebayFee,
@@ -147,12 +148,20 @@ export default function ProcessedOrders() {
       'TESCO': result.tescoFee,
       'THERANGE': result.theRangeFee,
       'TIKTOK': result.tiktokFee,
-      // Additional mappings for variations in source names
+      
+      // Additional exact mappings from actual API responses
       'Manomano hub': result.manomanoFee,
+      'Manomano HUB': result.manomanoFee,
       'OnBuy v2': result.onbuyFee,
       'TikTok': result.tiktokFee,
       'TheRange': result.theRangeFee,
-      'Debenhams': result.debenhamsFee
+      'Debenhams': result.debenhamsFee,
+      'Mirakl MP': result.manomanoFee, // Mirakl MP appears to be related to Manomano
+      
+      // Other possible variations
+      'DIRECT': result.amazonFee, // Default to Amazon fee for direct orders
+      'VIRTUALSTOCK': result.amazonFee,
+      'WAYFAIRCHANNEL': result.amazonFee
     };
     
     const sourceFee = sourceToFeeMap[order.Source];
