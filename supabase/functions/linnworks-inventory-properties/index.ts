@@ -57,6 +57,7 @@ serve(async (req) => {
     // Extract specific properties we need
     let costGBP = null;
     let shippingFreight = null;
+    let courierCharge = null;
 
     if (Array.isArray(data)) {
       for (const property of data) {
@@ -64,6 +65,8 @@ serve(async (req) => {
           costGBP = property.PropertyValue;
         } else if (property.ProperyName === "Z-Shipping Freight / Account Only") {
           shippingFreight = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Courier Charge / Account Only") {
+          courierCharge = property.PropertyValue;
         }
       }
     }
@@ -73,7 +76,8 @@ serve(async (req) => {
         sku: itemNumber,
         costGBP,
         shippingFreight,
-        hasData: costGBP !== null || shippingFreight !== null
+        courierCharge,
+        hasData: costGBP !== null || shippingFreight !== null || courierCharge !== null
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

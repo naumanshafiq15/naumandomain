@@ -42,6 +42,7 @@ interface ProcessedOrder {
   unitValue?: number;
   costGBP?: string;
   shippingFreight?: string;
+  courierCharge?: string;
   enhancedDataLoading?: boolean;
   enhancedDataError?: string;
 }
@@ -61,6 +62,7 @@ interface EnhancedOrderResult {
   unitValue?: number;
   costGBP?: string;
   shippingFreight?: string;
+  courierCharge?: string;
   error?: string;
   success?: boolean;
 }
@@ -168,6 +170,7 @@ export default function ProcessedOrders() {
             unitValue: result.unitValue,
             costGBP: result.costGBP,
             shippingFreight: result.shippingFreight,
+            courierCharge: result.courierCharge,
             enhancedDataLoading: false,
             enhancedDataError: result.error
           } : order));
@@ -234,6 +237,7 @@ export default function ProcessedOrders() {
               unitValue: result.unitValue,
               costGBP: result.costGBP,
               shippingFreight: result.shippingFreight,
+              courierCharge: result.courierCharge,
               enhancedDataLoading: false,
               enhancedDataError: result.error
             };
@@ -408,6 +412,7 @@ export default function ProcessedOrders() {
                       
                       <TableHead>Cost £</TableHead>
                       <TableHead>Shipping Freight £</TableHead>
+                      <TableHead>Courier Charge £</TableHead>
                     </>}
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -441,6 +446,9 @@ export default function ProcessedOrders() {
                         </TableCell>
                         <TableCell>
                           {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.shippingFreight || "N/A"}
+                        </TableCell>
+                        <TableCell>
+                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.courierCharge || "N/A"}
                         </TableCell>
                       </>}
                     <TableCell>
