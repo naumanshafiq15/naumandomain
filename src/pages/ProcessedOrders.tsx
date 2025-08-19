@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
 interface ProcessedOrder {
   pkOrderID: string;
   nOrderId: number;
@@ -53,6 +54,7 @@ interface ProcessedOrder {
   enhancedDataLoading?: boolean;
   enhancedDataError?: string;
 }
+
 interface ProcessedOrdersResponse {
   ProcessedOrders: {
     PageNumber: number;
@@ -62,6 +64,7 @@ interface ProcessedOrdersResponse {
     Data: ProcessedOrder[];
   };
 }
+
 interface EnhancedOrderResult {
   orderId: string;
   sku?: string;
@@ -90,6 +93,7 @@ interface EnhancedOrderResult {
   error?: string;
   success?: boolean;
 }
+
 export default function ProcessedOrders() {
   const {
     authToken,
@@ -111,7 +115,7 @@ export default function ProcessedOrders() {
     fromDate: "2025-05-01",
     toDate: "2025-09-01",
     source: "DIRECT",
-    subSource: ""
+    subSource: "all"
   });
   const {
     toast
@@ -325,6 +329,7 @@ export default function ProcessedOrders() {
       profit: Math.round(profit * 100) / 100
     };
   };
+
   const fetchOrders = async (pageNumber = 1) => {
     if (!authToken) return;
     setIsLoading(true);
@@ -335,8 +340,8 @@ export default function ProcessedOrders() {
         SearchTerm: filters.source
       }];
       
-      // Add SubSource filter if specified
-      if (filters.subSource.trim()) {
+      // Add SubSource filter if specified and not "all"
+      if (filters.subSource.trim() && filters.subSource !== "all") {
         searchFilters.push({
           SearchField: "SubSource",
           SearchTerm: filters.subSource
@@ -380,6 +385,7 @@ export default function ProcessedOrders() {
       setIsLoading(false);
     }
   };
+
   const fetchEnhancedDataForOrder = async (orderId: string) => {
     if (!authToken) return;
 
@@ -456,6 +462,7 @@ export default function ProcessedOrders() {
       });
     }
   };
+
   const fetchAllEnhancedData = async () => {
     if (!authToken || orders.length === 0) return;
     setEnhancedDataLoading(true);
@@ -512,18 +519,22 @@ export default function ProcessedOrders() {
       setEnhancedDataLoading(false);
     }
   };
+
   useEffect(() => {
     if (authToken) {
       fetchOrders();
     }
   }, [authToken]);
+
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchOrders(1);
   };
+
   const handleRefresh = async () => {
     await authenticate();
   };
+
   if (authLoading) {
     return <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -533,6 +544,7 @@ export default function ProcessedOrders() {
         </div>
       </div>;
   }
+
   if (authError) {
     return <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -566,6 +578,7 @@ export default function ProcessedOrders() {
         </Card>
       </div>;
   }
+
   return <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Processed Orders - Linnworks Data</h1>
@@ -600,7 +613,7 @@ export default function ProcessedOrders() {
               <Select value={filters.source} onValueChange={value => setFilters(prev => ({
               ...prev,
               source: value,
-              subSource: value === "VIRTUALSTOCK" ? prev.subSource : "" // Clear subSource when not VIRTUALSTOCK
+              subSource: value === "VIRTUALSTOCK" ? prev.subSource : "all" // Reset subSource when not VIRTUALSTOCK
             }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select source" />
@@ -634,7 +647,7 @@ export default function ProcessedOrders() {
                     <SelectValue placeholder="Select sub source" />
                   </SelectTrigger>
                   <SelectContent className="bg-background z-50">
-                    <SelectItem value="">All Sub Sources</SelectItem>
+                    <SelectItem value="all">All Sub Sources</SelectItem>
                     <SelectItem value="Wilko">Wilko</SelectItem>
                     <SelectItem value="RobertDayas">Robert Dyas</SelectItem>
                   </SelectContent>
