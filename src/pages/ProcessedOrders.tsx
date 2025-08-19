@@ -81,6 +81,7 @@ interface EnhancedOrderResult {
   tescoFee?: string;
   theRangeFee?: string;
   tiktokFee?: string;
+  robertDyasFee?: string;
   error?: string;
   success?: boolean;
 }
@@ -130,8 +131,43 @@ export default function ProcessedOrders() {
       shopifyFee: result.shopifyFee,
       tescoFee: result.tescoFee,
       theRangeFee: result.theRangeFee,
-      tiktokFee: result.tiktokFee
+      tiktokFee: result.tiktokFee,
+      robertDyasFee: result.robertDyasFee
     });
+    
+    // Special handling for VIRTUALSTOCK source
+    if (order.Source === 'VIRTUALSTOCK') {
+      // VIRTUALSTOCK uses different formula
+      // Selling Price (Excluding VAT) = Price with VAT ÷ 1.2
+      const sellingPriceExVat = sellingPriceIncVat / 1.2;
+      
+      // Marketplace Fee = Selling Price (Excluding VAT) × Robert Dyas Fee
+      const robertDyasFeeRate = parseFloat(result.robertDyasFee || '0');
+      const marketplaceFee = sellingPriceExVat * robertDyasFeeRate;
+      
+      // Total Cost = Cost (£) + Sea Freight + Courier Charges + Marketplace Fee (no VAT)
+      const totalCost = costGBP + shippingFreight + courierCharge + marketplaceFee;
+      
+      // Profit = Selling Price (Excluding VAT) - Total Cost
+      const profit = sellingPriceExVat - totalCost;
+      
+      console.log('VIRTUALSTOCK calculation:', {
+        sellingPriceIncVat,
+        sellingPriceExVat,
+        robertDyasFeeRate,
+        marketplaceFee,
+        totalCost,
+        profit
+      });
+      
+      return {
+        sellingPriceExVat: Math.round(sellingPriceExVat * 100) / 100,
+        marketplaceFee: Math.round(marketplaceFee * 100) / 100,
+        totalCost: Math.round(totalCost * 100) / 100,
+        profit: Math.round(profit * 100) / 100,
+        vat: 0 // No VAT in cost calculation for VIRTUALSTOCK
+      };
+    }
     
     // Get the appropriate fee based on source - using exact source names from API
     let sourceFeeRate = 0;
