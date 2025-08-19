@@ -599,7 +599,8 @@ export default function ProcessedOrders() {
                   <SelectItem value="EBAY">EBAY</SelectItem>
                   <SelectItem value="Manomano hub">Manomano hub</SelectItem>
                   <SelectItem value="OnBuy v2">OnBuy v2</SelectItem>
-                  <SelectItem value="VIRTUALSTOCK">VIRTUALSTOCK</SelectItem>
+                  <SelectItem value="RobertDayas">RobertDayas</SelectItem>
+                  <SelectItem value="Wilko">Wilko</SelectItem>
                   <SelectItem value="SHEIN">SHEIN</SelectItem>
                   <SelectItem value="SHOPIFY">SHOPIFY</SelectItem>
                   <SelectItem value="TESCO">TESCO</SelectItem>
