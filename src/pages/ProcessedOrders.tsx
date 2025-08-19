@@ -455,10 +455,10 @@ export default function ProcessedOrders() {
                       <TableHead>Cost £</TableHead>
                       <TableHead>Shipping Freight £</TableHead>
                       <TableHead>Courier Charge £</TableHead>
-                      <TableHead>Marketplace Fee £</TableHead>
-                      <TableHead>VAT £</TableHead>
-                      <TableHead>Total Cost £</TableHead>
-                      <TableHead>Profit £</TableHead>
+                      <TableHead className="bg-green-50">Marketplace Fee £</TableHead>
+                      <TableHead className="bg-green-50">VAT £</TableHead>
+                      <TableHead className="bg-green-50">Total Cost £</TableHead>
+                      <TableHead className="bg-green-50">Profit £</TableHead>
                     </>}
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -498,16 +498,16 @@ export default function ProcessedOrders() {
                         <TableCell>
                           {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.courierCharge || "N/A"}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="bg-green-50">
                           {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.Source === 'AMAZON' ? (order.marketplaceFee?.toFixed(2) || "N/A") : "N/A"}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="bg-green-50">
                           {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.Source === 'AMAZON' ? (order.vat?.toFixed(2) || "N/A") : "N/A"}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="bg-green-50">
                           {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.Source === 'AMAZON' ? (order.totalCost?.toFixed(2) || "N/A") : "N/A"}
                         </TableCell>
-                        <TableCell className={order.profit && order.profit < 0 ? "text-destructive font-semibold" : order.profit && order.profit > 0 ? "text-green-600 font-semibold" : ""}>
+                        <TableCell className={`bg-green-50 ${order.profit && order.profit < 0 ? "text-destructive font-semibold" : order.profit && order.profit > 0 ? "text-green-600 font-semibold" : ""}`}>
                           {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.Source === 'AMAZON' ? (order.profit?.toFixed(2) || "N/A") : "N/A"}
                         </TableCell>
                       </>}
