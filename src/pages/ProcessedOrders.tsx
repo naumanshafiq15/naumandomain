@@ -178,6 +178,8 @@ export default function ProcessedOrders() {
               : order
           ));
 
+          setShowEnhancedColumns(true);
+
           if (result.error) {
             toast({
               title: "Partial data loaded",
