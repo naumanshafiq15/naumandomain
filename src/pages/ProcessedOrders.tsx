@@ -157,7 +157,10 @@ export default function ProcessedOrders() {
       }
 
       if (data?.results && data.results.length > 0) {
+        console.log('Single order fetch response:', data);
+        console.log('Looking for orderId:', orderId);
         const result = data.results.find((r: EnhancedOrderResult) => r.orderId === orderId) as EnhancedOrderResult;
+        console.log('Found result:', result);
         
         if (result) {
           setOrders(prev => prev.map(order => 
@@ -188,9 +191,11 @@ export default function ProcessedOrders() {
             });
           }
         } else {
+          console.error('No matching result found for orderId:', orderId);
           throw new Error('No data found for this order');
         }
       } else {
+        console.error('No results in response:', data);
         throw new Error('No results returned from API');
       }
     } catch (err) {
