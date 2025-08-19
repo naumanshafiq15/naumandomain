@@ -599,12 +599,13 @@ export default function ProcessedOrders() {
               <Label htmlFor="source">Source</Label>
               <Select value={filters.source} onValueChange={value => setFilters(prev => ({
               ...prev,
-              source: value
+              source: value,
+              subSource: value === "VIRTUALSTOCK" ? prev.subSource : "" // Clear subSource when not VIRTUALSTOCK
             }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select source" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-50">
                   <SelectItem value="DIRECT">DIRECT</SelectItem>
                   <SelectItem value="AMAZON">AMAZON</SelectItem>
                   <SelectItem value="Mirakl MP">Mirakl MP</SelectItem>
@@ -622,19 +623,24 @@ export default function ProcessedOrders() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid w-full max-w-sm items-center gap-1.5">
-              <Label htmlFor="subSource">Sub Source (optional)</Label>
-              <Input 
-                type="text" 
-                id="subSource" 
-                placeholder="e.g., RobertDayas, Wilko" 
-                value={filters.subSource} 
-                onChange={e => setFilters(prev => ({
+            {filters.source === "VIRTUALSTOCK" && (
+              <div className="grid w-full max-w-sm items-center gap-1.5">
+                <Label htmlFor="subSource">Sub Source</Label>
+                <Select value={filters.subSource} onValueChange={value => setFilters(prev => ({
                   ...prev,
-                  subSource: e.target.value
-                }))} 
-              />
-            </div>
+                  subSource: value
+                }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select sub source" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="">All Sub Sources</SelectItem>
+                    <SelectItem value="Wilko">Wilko</SelectItem>
+                    <SelectItem value="RobertDayas">Robert Dyas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Button type="submit" disabled={isLoading}>
               Apply Filters
             </Button>
