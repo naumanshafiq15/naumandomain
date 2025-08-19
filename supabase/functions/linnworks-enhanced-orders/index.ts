@@ -125,19 +125,55 @@ serve(async (req) => {
 
           const inventoryData = await inventoryResponse.json();
 
-          // Extract cost and shipping data
+          // Extract cost, shipping data, and marketplace fees
           let costGBP = null;
           let shippingFreight = null;
           let courierCharge = null;
+          let amazonFee = null;
+          let bqFee = null;
+          let ebayFee = null;
+          let debenhamsFee = null;
+          let manomanoFee = null;
+          let onbuyFee = null;
+          let sheinFee = null;
+          let shopifyFee = null;
+          let tescoFee = null;
+          let theRangeFee = null;
+          let tiktokFee = null;
 
           if (Array.isArray(inventoryData)) {
             for (const property of inventoryData) {
-              if (property.ProperyName === "Z-Cost £ / Account Only") {
-                costGBP = property.PropertyValue;
-              } else if (property.ProperyName === "Z-Shipping Freight / Account Only") {
-                shippingFreight = property.PropertyValue;
-              } else if (property.ProperyName === "Z-Courier Charge / Account Only") {
-                courierCharge = property.PropertyValue;
+              const propName = property.ProperyName;
+              const propValue = property.PropertyValue;
+              
+              if (propName === "Z-Cost £ / Account Only") {
+                costGBP = propValue;
+              } else if (propName === "Z-Shipping Freight / Account Only") {
+                shippingFreight = propValue;
+              } else if (propName === "Z-Courier Charge / Account Only") {
+                courierCharge = propValue;
+              } else if (propName === "Z-Amazon Fee") {
+                amazonFee = propValue;
+              } else if (propName === "Z-B&Q Fee") {
+                bqFee = propValue;
+              } else if (propName === "Z-Ebay Fee") {
+                ebayFee = propValue;
+              } else if (propName === "Z-Debenhams Fee") {
+                debenhamsFee = propValue;
+              } else if (propName === "Z-Manomano Fee") {
+                manomanoFee = propValue;
+              } else if (propName === "Z-Onbuy Fee") {
+                onbuyFee = propValue;
+              } else if (propName === "Z-Shein Fee") {
+                sheinFee = propValue;
+              } else if (propName === "Z-Shopify Fee") {
+                shopifyFee = propValue;
+              } else if (propName === "Z-Tesco Fee") {
+                tescoFee = propValue;
+              } else if (propName === "Z-TheRange Fee") {
+                theRangeFee = propValue;
+              } else if (propName === "Z-Tiktok Fee") {
+                tiktokFee = propValue;
               }
             }
           }
@@ -158,6 +194,17 @@ serve(async (req) => {
             costGBP,
             shippingFreight,
             courierCharge,
+            amazonFee,
+            bqFee,
+            ebayFee,
+            debenhamsFee,
+            manomanoFee,
+            onbuyFee,
+            sheinFee,
+            shopifyFee,
+            tescoFee,
+            theRangeFee,
+            tiktokFee,
             success: true
           };
 
