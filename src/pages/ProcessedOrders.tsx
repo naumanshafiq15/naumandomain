@@ -440,15 +440,9 @@ export default function ProcessedOrders() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Order ID</TableHead>
-                  <TableHead>Reference</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Country</TableHead>
                   <TableHead>Source</TableHead>
                   <TableHead>Selling Price (Inc. VAT)</TableHead>
-                  <TableHead>Currency</TableHead>
-                  <TableHead>Received Date</TableHead>
                   <TableHead>Processed Date</TableHead>
-                  <TableHead>Tracking</TableHead>
                   {showEnhancedColumns && <>
                       <TableHead>SKU</TableHead>
                       <TableHead>Order Qty</TableHead>
@@ -466,22 +460,11 @@ export default function ProcessedOrders() {
               <TableBody>
                 {orders.map(order => <TableRow key={order.pkOrderID}>
                     <TableCell className="font-mono text-xs">{order.nOrderId}</TableCell>
-                    <TableCell>{order.ReferenceNum}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{order.cFullName}</div>
-                        <div className="text-sm text-muted-foreground">{order.cEmailAddress}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{order.cCountry}</TableCell>
                     <TableCell>
                       <Badge variant="secondary">{order.Source}</Badge>
                     </TableCell>
                     <TableCell>{order.fTotalCharge?.toFixed(2)}</TableCell>
-                    <TableCell>{order.cCurrency}</TableCell>
-                    <TableCell>{new Date(order.dReceivedDate).toLocaleDateString()}</TableCell>
                     <TableCell>{new Date(order.dProcessedOn).toLocaleDateString()}</TableCell>
-                    <TableCell className="font-mono text-xs">{order.PostalTrackingNumber}</TableCell>
                     {showEnhancedColumns && <>
                         <TableCell>
                           {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.enhancedDataError ? <div className="text-destructive text-xs">Error</div> : order.sku || "N/A"}
