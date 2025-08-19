@@ -639,7 +639,7 @@ export default function ProcessedOrders() {
             {filters.source === "VIRTUALSTOCK" && (
               <div className="grid w-full max-w-sm items-center gap-1.5">
                 <Label htmlFor="subSource">Sub Source</Label>
-                <Select value={filters.subSource} onValueChange={value => setFilters(prev => ({
+                <Select value={filters.subSource || "all"} onValueChange={value => setFilters(prev => ({
                   ...prev,
                   subSource: value
                 }))}>
