@@ -27,25 +27,25 @@ serve(async (req) => {
     ];
 
     // If searching for Wilko or RobertDayas, add both Source and SubSource filters
-    const hasWilkoOrRobertDayas = searchFilters?.some((filter: any) => 
+    const subSourceFilter = searchFilters?.find((filter: any) => 
       filter.SearchField === "Source" && (filter.SearchTerm === "Wilko" || filter.SearchTerm === "RobertDayas")
     );
 
-    if (hasWilkoOrRobertDayas) {
-      const subSourceTerm = searchFilters?.find((filter: any) => 
-        filter.SearchField === "Source" && (filter.SearchTerm === "Wilko" || filter.SearchTerm === "RobertDayas")
-      )?.SearchTerm;
-
+    if (subSourceFilter) {
+      // For RobertDayas and Wilko, we need to determine the correct parent Source
+      // Based on your example, we need both Source and SubSource filters
       mappedSearchFilters = [
         {
           SearchField: "Source",
-          SearchTerm: "VIRTUALSTOCK"
+          SearchTerm: "VIRTUALSTOCK" // This might need to be adjusted based on actual data
         },
         {
-          SearchField: "SubSource",
-          SearchTerm: subSourceTerm
+          SearchField: "SubSource", 
+          SearchTerm: subSourceFilter.SearchTerm
         }
       ];
+      
+      console.log('Searching with SubSource filters:', JSON.stringify(mappedSearchFilters, null, 2));
     }
 
     const requestBody = {
