@@ -18,21 +18,35 @@ serve(async (req) => {
       throw new Error('Authorization token is required');
     }
 
-    // Map certain search terms to use SubSource field instead of Source
-    const mappedSearchFilters = searchFilters?.map((filter: any) => {
-      if (filter.SearchField === "Source" && (filter.SearchTerm === "Wilko" || filter.SearchTerm === "RobertDayas")) {
-        return {
-          SearchField: "SubSource",
-          SearchTerm: filter.SearchTerm
-        };
-      }
-      return filter;
-    }) || [
+    // Handle SubSource filtering - need both Source and SubSource filters
+    let mappedSearchFilters = searchFilters || [
       {
         SearchField: "Source",
         SearchTerm: "DIRECT"
       }
     ];
+
+    // If searching for Wilko or RobertDayas, add both Source and SubSource filters
+    const hasWilkoOrRobertDayas = searchFilters?.some((filter: any) => 
+      filter.SearchField === "Source" && (filter.SearchTerm === "Wilko" || filter.SearchTerm === "RobertDayas")
+    );
+
+    if (hasWilkoOrRobertDayas) {
+      const subSourceTerm = searchFilters?.find((filter: any) => 
+        filter.SearchField === "Source" && (filter.SearchTerm === "Wilko" || filter.SearchTerm === "RobertDayas")
+      )?.SearchTerm;
+
+      mappedSearchFilters = [
+        {
+          SearchField: "Source",
+          SearchTerm: "VIRTUALSTOCK"
+        },
+        {
+          SearchField: "SubSource",
+          SearchTerm: subSourceTerm
+        }
+      ];
+    }
 
     const requestBody = {
       request: {
