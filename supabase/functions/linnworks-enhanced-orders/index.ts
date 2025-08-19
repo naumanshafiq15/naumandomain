@@ -55,22 +55,50 @@ serve(async (req) => {
             },
           });
 
+          console.log(`Order items response status for ${orderId}:`, orderItemsResponse.status);
+
           if (!orderItemsResponse.ok) {
+            console.error(`Failed to fetch order items for ${orderId}:`, {
+              status: orderItemsResponse.status,
+              statusText: orderItemsResponse.statusText,
+              headers: Object.fromEntries(orderItemsResponse.headers)
+            });
             throw new Error(`Order items API error: ${orderItemsResponse.status}`);
           }
 
           const orderItemsData = await orderItemsResponse.json();
-          const sku = orderItemsData?.SKU;
+          console.log(`Order items data structure for ${orderId}:`, JSON.stringify(orderItemsData, null, 2));
+          
+          // Extract SKU from the response - handle different possible structures
+          let sku = null;
+          
+          if (Array.isArray(orderItemsData) && orderItemsData.length > 0) {
+            // If it's an array, get SKU from first item
+            sku = orderItemsData[0]?.SKU || orderItemsData[0]?.ItemNumber || orderItemsData[0]?.sku;
+          } else if (orderItemsData && typeof orderItemsData === 'object') {
+            // If it's an object, look for SKU in various possible locations
+            sku = orderItemsData.SKU || orderItemsData.ItemNumber || orderItemsData.sku ||
+                  (orderItemsData.Items && orderItemsData.Items[0]?.SKU) ||
+                  (orderItemsData.Data && orderItemsData.Data[0]?.SKU);
+          }
 
           if (!sku) {
+            console.error(`No SKU found for order ${orderId}. Available data:`, {
+              isArray: Array.isArray(orderItemsData),
+              dataType: typeof orderItemsData,
+              keys: orderItemsData && typeof orderItemsData === 'object' ? Object.keys(orderItemsData) : 'N/A',
+              firstItem: Array.isArray(orderItemsData) && orderItemsData[0] ? Object.keys(orderItemsData[0]) : 'N/A'
+            });
             return {
               orderId,
-              error: 'No SKU found for order',
+              error: `No SKU found - received ${typeof orderItemsData} with keys: ${orderItemsData && typeof orderItemsData === 'object' ? Object.keys(orderItemsData).join(', ') : 'N/A'}`,
               sku: null,
               costGBP: null,
               shippingFreight: null
             };
           }
+          
+          console.log(`Found SKU for ${orderId}: ${sku}`);
 
           // Small delay before next API call
           await delay(DELAY_BETWEEN_CALLS);

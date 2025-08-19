@@ -17,12 +17,20 @@ serve(async (req) => {
     const token = Deno.env.get('LINNWORKS_TOKEN');
 
     console.log('=== LINNWORKS AUTH DEBUG ===');
-    console.log('ApplicationId:', applicationId);
-    console.log('ApplicationSecret:', applicationSecret);
-    console.log('Token:', token);
+    console.log('ApplicationId exists:', !!applicationId);
+    console.log('ApplicationSecret exists:', !!applicationSecret);
+    console.log('Token exists:', !!token);
+    
+    if (applicationId) console.log('ApplicationId length:', applicationId.length);
+    if (applicationSecret) console.log('ApplicationSecret length:', applicationSecret.length);
+    if (token) console.log('Token length:', token.length);
 
     if (!applicationId || !applicationSecret || !token) {
-      throw new Error('Missing Linnworks credentials');
+      const missing = [];
+      if (!applicationId) missing.push('LINNWORKS_APPLICATION_ID');
+      if (!applicationSecret) missing.push('LINNWORKS_APPLICATION_SECRET');
+      if (!token) missing.push('LINNWORKS_TOKEN');
+      throw new Error(`Missing Linnworks credentials: ${missing.join(', ')}`);
     }
 
     const requestBody = {
@@ -31,7 +39,7 @@ serve(async (req) => {
       token: token
     };
     
-    console.log('Request body being sent:', JSON.stringify(requestBody, null, 2));
+    console.log('Making auth request to Linnworks API...');
     
     const authResponse = await fetch('https://api.linnworks.net/api/Auth/AuthorizeByApplication', {
       method: 'POST',
@@ -42,10 +50,19 @@ serve(async (req) => {
     });
 
     console.log('Auth response status:', authResponse.status);
+    console.log('Auth response headers:', Object.fromEntries(authResponse.headers));
+    
     const responseText = await authResponse.text();
+    console.log('Auth response body length:', responseText.length);
     console.log('Auth response body:', responseText);
 
     if (!authResponse.ok) {
+      console.error('Authentication failed with details:', {
+        status: authResponse.status,
+        statusText: authResponse.statusText,
+        headers: Object.fromEntries(authResponse.headers),
+        body: responseText
+      });
       throw new Error(`Authentication failed: ${authResponse.status} - ${responseText}`);
     }
 

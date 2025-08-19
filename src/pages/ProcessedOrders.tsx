@@ -279,8 +279,11 @@ export default function ProcessedOrders() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Authenticating with Linnworks...</span>
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-lg font-medium">Authenticating with Linnworks...</p>
+          <p className="text-sm text-muted-foreground mt-2">This may take a few moments...</p>
+        </div>
       </div>
     );
   }
@@ -301,7 +304,24 @@ export default function ProcessedOrders() {
         </div>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-muted-foreground">Click refresh to authenticate and load orders.</p>
+            <div className="max-w-2xl">
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-4">
+                <h3 className="font-semibold text-destructive mb-2">Authentication Failed</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Unable to connect to Linnworks API. This could be due to:
+                </p>
+                <ul className="text-sm text-muted-foreground space-y-1 mb-3">
+                  <li>• Invalid or expired API credentials</li>
+                  <li>• Network connectivity issues</li>
+                  <li>• Linnworks API service problems</li>
+                </ul>
+                <details className="mt-3">
+                  <summary className="text-sm font-medium cursor-pointer hover:text-foreground">Error Details</summary>
+                  <pre className="text-xs bg-muted p-2 rounded mt-2 overflow-auto max-h-32 border">{authError}</pre>
+                </details>
+              </div>
+              <p className="text-muted-foreground">Click refresh to retry authentication and load orders.</p>
+            </div>
           </CardContent>
         </Card>
       </div>
