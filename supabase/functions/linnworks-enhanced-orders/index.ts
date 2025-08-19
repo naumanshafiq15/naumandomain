@@ -94,7 +94,8 @@ serve(async (req) => {
               error: `No SKU found - received ${typeof orderItemsData} with keys: ${orderItemsData && typeof orderItemsData === 'object' ? Object.keys(orderItemsData).join(', ') : 'N/A'}`,
               sku: null,
               costGBP: null,
-              shippingFreight: null
+              shippingFreight: null,
+              courierCharge: null
             };
           }
           
@@ -126,6 +127,7 @@ serve(async (req) => {
           // Extract cost and shipping data
           let costGBP = null;
           let shippingFreight = null;
+          let courierCharge = null;
 
           if (Array.isArray(inventoryData)) {
             for (const property of inventoryData) {
@@ -133,6 +135,8 @@ serve(async (req) => {
                 costGBP = property.PropertyValue;
               } else if (property.ProperyName === "Z-Shipping Freight / Account Only") {
                 shippingFreight = property.PropertyValue;
+              } else if (property.ProperyName === "Z-Courier Charge / Account Only") {
+                courierCharge = property.PropertyValue;
               }
             }
           }
@@ -144,6 +148,7 @@ serve(async (req) => {
             unitValue: orderItemsData?.UnitValue || null,
             costGBP,
             shippingFreight,
+            courierCharge,
             success: true
           };
 
@@ -154,7 +159,8 @@ serve(async (req) => {
             error: error.message,
             sku: null,
             costGBP: null,
-            shippingFreight: null
+            shippingFreight: null,
+            courierCharge: null
           };
         }
       });
