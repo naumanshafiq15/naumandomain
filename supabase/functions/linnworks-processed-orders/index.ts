@@ -18,39 +18,14 @@ serve(async (req) => {
       throw new Error('Authorization token is required');
     }
 
-    // Handle SubSource filtering - need both Source and SubSource filters
-    let mappedSearchFilters = searchFilters || [
-      {
-        SearchField: "Source",
-        SearchTerm: "DIRECT"
-      }
-    ];
-
-    // If searching for Wilko or RobertDayas, add both Source and SubSource filters
-    const subSourceFilter = searchFilters?.find((filter: any) => 
-      filter.SearchField === "Source" && (filter.SearchTerm === "Wilko" || filter.SearchTerm === "RobertDayas")
-    );
-
-    if (subSourceFilter) {
-      // For RobertDayas and Wilko, we need to determine the correct parent Source
-      // Based on your example, we need both Source and SubSource filters
-      mappedSearchFilters = [
-        {
-          SearchField: "Source",
-          SearchTerm: "VIRTUALSTOCK" // This might need to be adjusted based on actual data
-        },
-        {
-          SearchField: "SubSource", 
-          SearchTerm: subSourceFilter.SearchTerm
-        }
-      ];
-      
-      console.log('Searching with SubSource filters:', JSON.stringify(mappedSearchFilters, null, 2));
-    }
-
     const requestBody = {
       request: {
-        SearchFilters: mappedSearchFilters,
+        SearchFilters: searchFilters || [
+          {
+            SearchField: "Source",
+            SearchTerm: "DIRECT"
+          }
+        ],
         PageNumber: pageNumber,
         ResultsPerPage: resultsPerPage,
         FromDate: fromDate || "2025-05-01T00:00:00",
