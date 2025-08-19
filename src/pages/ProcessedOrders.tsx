@@ -39,7 +39,6 @@ interface ProcessedOrder {
   AccountName: string;
   // Enhanced data
   sku?: string;
-  itemTitle?: string;
   unitValue?: number;
   costGBP?: string;
   shippingFreight?: string;
@@ -60,7 +59,6 @@ interface ProcessedOrdersResponse {
 interface EnhancedOrderResult {
   orderId: string;
   sku?: string;
-  itemTitle?: string;
   unitValue?: number;
   costGBP?: string;
   shippingFreight?: string;
@@ -168,7 +166,6 @@ export default function ProcessedOrders() {
               ? { 
                   ...order, 
                   sku: result.sku,
-                  itemTitle: result.itemTitle,
                   unitValue: result.unitValue,
                   costGBP: result.costGBP,
                   shippingFreight: result.shippingFreight,
@@ -244,7 +241,6 @@ export default function ProcessedOrders() {
             return {
               ...order,
               sku: result.sku,
-              itemTitle: result.itemTitle,
               unitValue: result.unitValue,
               costGBP: result.costGBP,
               shippingFreight: result.shippingFreight,
@@ -453,7 +449,6 @@ export default function ProcessedOrders() {
                   {showEnhancedColumns && (
                     <>
                       <TableHead>SKU</TableHead>
-                      <TableHead>Item Title</TableHead>
                       <TableHead>Cost £</TableHead>
                       <TableHead>Shipping Freight £</TableHead>
                     </>
@@ -490,15 +485,6 @@ export default function ProcessedOrders() {
                             <div className="text-destructive text-xs">Error</div>
                           ) : (
                             order.sku || "N/A"
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {order.enhancedDataLoading ? (
-                            <div className="animate-pulse">Loading...</div>
-                          ) : (
-                            <div className="max-w-[200px] truncate" title={order.itemTitle}>
-                              {order.itemTitle || "N/A"}
-                            </div>
                           )}
                         </TableCell>
                         <TableCell>
