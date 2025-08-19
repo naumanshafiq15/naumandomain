@@ -69,6 +69,23 @@ serve(async (req) => {
           const orderItemsData = await orderItemsResponse.json();
           console.log(`Order items data structure for ${orderId}:`, JSON.stringify(orderItemsData, null, 2));
           
+          // Check if any item has IsCompositeParent: true
+          if (Array.isArray(orderItemsData) && orderItemsData.length > 0) {
+            const hasCompositeParent = orderItemsData.some((item: any) => item.IsCompositeParent === true);
+            if (hasCompositeParent) {
+              console.log(`Skipping order ${orderId} because it has IsCompositeParent: true`);
+              return {
+                orderId,
+                error: "Skipped - IsCompositeParent: true",
+                sku: null,
+                orderQty: null,
+                costGBP: null,
+                shippingFreight: null,
+                courierCharge: null
+              };
+            }
+          }
+          
           // Extract SKU from the response - handle different possible structures
           let sku = null;
           
