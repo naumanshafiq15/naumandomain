@@ -10,7 +10,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
 interface ProcessedOrder {
   pkOrderID: string;
   nOrderId: number;
@@ -39,13 +38,13 @@ interface ProcessedOrder {
   AccountName: string;
   // Enhanced data
   sku?: string;
+  itemTitle?: string;
   unitValue?: number;
   costGBP?: string;
   shippingFreight?: string;
   enhancedDataLoading?: boolean;
   enhancedDataError?: string;
 }
-
 interface ProcessedOrdersResponse {
   ProcessedOrders: {
     PageNumber: number;
@@ -55,19 +54,23 @@ interface ProcessedOrdersResponse {
     Data: ProcessedOrder[];
   };
 }
-
 interface EnhancedOrderResult {
   orderId: string;
   sku?: string;
+  itemTitle?: string;
   unitValue?: number;
   costGBP?: string;
   shippingFreight?: string;
   error?: string;
   success?: boolean;
 }
-
 export default function ProcessedOrders() {
-  const { authToken, isLoading: authLoading, error: authError, authenticate } = useLinnworksAuth();
+  const {
+    authToken,
+    isLoading: authLoading,
+    error: authError,
+    authenticate
+  } = useLinnworksAuth();
   const [orders, setOrders] = useState<ProcessedOrder[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [enhancedDataLoading, setEnhancedDataLoading] = useState(false);
@@ -76,40 +79,39 @@ export default function ProcessedOrders() {
     pageNumber: 1,
     entriesPerPage: 200,
     totalEntries: 0,
-    totalPages: 0,
+    totalPages: 0
   });
   const [filters, setFilters] = useState({
     fromDate: "2025-05-01",
     toDate: "2025-09-01",
-    source: "DIRECT",
+    source: "DIRECT"
   });
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const fetchOrders = async (pageNumber = 1) => {
     if (!authToken) return;
-
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('linnworks-processed-orders', {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('linnworks-processed-orders', {
         body: {
           authToken,
-          searchFilters: [
-            {
-              SearchField: "Source",
-              SearchTerm: filters.source
-            }
-          ],
+          searchFilters: [{
+            SearchField: "Source",
+            SearchTerm: filters.source
+          }],
           pageNumber,
           resultsPerPage: 200,
           fromDate: `${filters.fromDate}T00:00:00`,
-          toDate: `${filters.toDate}T00:00:00`,
-        },
+          toDate: `${filters.toDate}T00:00:00`
+        }
       });
-
       if (error) {
         throw new Error(error.message);
       }
-
       const response = data as ProcessedOrdersResponse;
       if (response.ProcessedOrders) {
         setOrders(response.ProcessedOrders.Data);
@@ -117,7 +119,7 @@ export default function ProcessedOrders() {
           pageNumber: response.ProcessedOrders.PageNumber,
           entriesPerPage: response.ProcessedOrders.EntriesPerPage,
           totalEntries: response.ProcessedOrders.TotalEntries,
-          totalPages: response.ProcessedOrders.TotalPages,
+          totalPages: response.ProcessedOrders.TotalPages
         });
       }
     } catch (err) {
@@ -125,68 +127,60 @@ export default function ProcessedOrders() {
       toast({
         title: "Error fetching orders",
         description: errorMessage,
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
-
   const fetchEnhancedDataForOrder = async (orderId: string) => {
     if (!authToken) return;
 
     // Mark this order as loading
-    setOrders(prev => prev.map(order => 
-      order.pkOrderID === orderId 
-        ? { ...order, enhancedDataLoading: true, enhancedDataError: undefined }
-        : order
-    ));
-
+    setOrders(prev => prev.map(order => order.pkOrderID === orderId ? {
+      ...order,
+      enhancedDataLoading: true,
+      enhancedDataError: undefined
+    } : order));
     try {
-      const { data, error: fetchError } = await supabase.functions.invoke('linnworks-enhanced-orders', {
+      const {
+        data,
+        error: fetchError
+      } = await supabase.functions.invoke('linnworks-enhanced-orders', {
         body: {
           authToken,
           orderIds: [orderId]
         }
       });
-
       if (fetchError) {
         throw new Error(fetchError.message);
       }
-
       if (data?.results && data.results.length > 0) {
         console.log('Single order fetch response:', data);
         console.log('Looking for orderId:', orderId);
         const result = data.results.find((r: EnhancedOrderResult) => r.orderId === orderId) as EnhancedOrderResult;
         console.log('Found result:', result);
-        
         if (result) {
-          setOrders(prev => prev.map(order => 
-            order.pkOrderID === orderId 
-              ? { 
-                  ...order, 
-                  sku: result.sku,
-                  unitValue: result.unitValue,
-                  costGBP: result.costGBP,
-                  shippingFreight: result.shippingFreight,
-                  enhancedDataLoading: false,
-                  enhancedDataError: result.error
-                }
-              : order
-          ));
-
-          setShowEnhancedColumns(true);
-
+          setOrders(prev => prev.map(order => order.pkOrderID === orderId ? {
+            ...order,
+            sku: result.sku,
+            itemTitle: result.itemTitle,
+            unitValue: result.unitValue,
+            costGBP: result.costGBP,
+            shippingFreight: result.shippingFreight,
+            enhancedDataLoading: false,
+            enhancedDataError: result.error
+          } : order));
           if (result.error) {
             toast({
               title: "Partial data loaded",
               description: `Order ${orderId}: ${result.error}`,
-              variant: "destructive",
+              variant: "destructive"
             });
           } else {
             toast({
               title: "Enhanced data loaded",
-              description: `Successfully loaded details for order ${orderId}`,
+              description: `Successfully loaded details for order ${orderId}`
             });
           }
         } else {
@@ -199,48 +193,44 @@ export default function ProcessedOrders() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch enhanced data';
-      setOrders(prev => prev.map(order => 
-        order.pkOrderID === orderId 
-          ? { ...order, enhancedDataLoading: false, enhancedDataError: errorMessage }
-          : order
-      ));
-      
+      setOrders(prev => prev.map(order => order.pkOrderID === orderId ? {
+        ...order,
+        enhancedDataLoading: false,
+        enhancedDataError: errorMessage
+      } : order));
       toast({
         title: "Error loading enhanced data",
         description: errorMessage,
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const fetchAllEnhancedData = async () => {
     if (!authToken || orders.length === 0) return;
-
     setEnhancedDataLoading(true);
-    
     try {
       const orderIds = orders.map(order => order.pkOrderID);
-      
-      const { data, error: fetchError } = await supabase.functions.invoke('linnworks-enhanced-orders', {
+      const {
+        data,
+        error: fetchError
+      } = await supabase.functions.invoke('linnworks-enhanced-orders', {
         body: {
           authToken,
           orderIds: orderIds
         }
       });
-
       if (fetchError) {
         throw new Error(fetchError.message);
       }
-
       if (data?.results) {
         const resultsMap = new Map(data.results.map((result: EnhancedOrderResult) => [result.orderId, result]));
-        
         setOrders(prev => prev.map(order => {
           const result = resultsMap.get(order.pkOrderID) as EnhancedOrderResult;
           if (result) {
             return {
               ...order,
               sku: result.sku,
+              itemTitle: result.itemTitle,
               unitValue: result.unitValue,
               costGBP: result.costGBP,
               shippingFreight: result.shippingFreight,
@@ -250,12 +240,10 @@ export default function ProcessedOrders() {
           }
           return order;
         }));
-
         setShowEnhancedColumns(true);
-        
         toast({
           title: "Enhanced data loaded",
-          description: `Processed ${data.successful} successful, ${data.failed} failed out of ${data.processed} orders`,
+          description: `Processed ${data.successful} successful, ${data.failed} failed out of ${data.processed} orders`
         });
       }
     } catch (err) {
@@ -263,51 +251,39 @@ export default function ProcessedOrders() {
       toast({
         title: "Error loading enhanced data",
         description: errorMessage,
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setEnhancedDataLoading(false);
     }
   };
-
   useEffect(() => {
     if (authToken) {
       fetchOrders();
     }
   }, [authToken]);
-
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchOrders(1);
   };
-
   const handleRefresh = async () => {
     await authenticate();
   };
-
   if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
+    return <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
           <p className="text-lg font-medium">Authenticating with Linnworks...</p>
           <p className="text-sm text-muted-foreground mt-2">This may take a few moments...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (authError) {
-    return (
-      <div className="space-y-6">
+    return <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Processed Orders - Linnworks Data</h1>
           <Button onClick={handleRefresh} disabled={authLoading}>
-            {authLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
-            )}
+            {authLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
             Refresh
           </Button>
         </div>
@@ -333,20 +309,13 @@ export default function ProcessedOrders() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Processed Orders - Linnworks Data</h1>
         <Button onClick={handleRefresh} disabled={isLoading || authLoading}>
-          {isLoading || authLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
-          )}
+          {isLoading || authLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
           Refresh
         </Button>
       </div>
@@ -359,28 +328,24 @@ export default function ProcessedOrders() {
           <form onSubmit={handleFilterSubmit} className="flex items-end gap-4">
             <div className="grid w-full max-w-sm items-center gap-1.5">
               <Label htmlFor="fromDate">From Date</Label>
-              <Input
-                type="date"
-                id="fromDate"
-                value={filters.fromDate}
-                onChange={(e) => setFilters(prev => ({ ...prev, fromDate: e.target.value }))}
-              />
+              <Input type="date" id="fromDate" value={filters.fromDate} onChange={e => setFilters(prev => ({
+              ...prev,
+              fromDate: e.target.value
+            }))} />
             </div>
             <div className="grid w-full max-w-sm items-center gap-1.5">
               <Label htmlFor="toDate">To Date</Label>
-              <Input
-                type="date"
-                id="toDate"
-                value={filters.toDate}
-                onChange={(e) => setFilters(prev => ({ ...prev, toDate: e.target.value }))}
-              />
+              <Input type="date" id="toDate" value={filters.toDate} onChange={e => setFilters(prev => ({
+              ...prev,
+              toDate: e.target.value
+            }))} />
             </div>
             <div className="grid w-full max-w-sm items-center gap-1.5">
               <Label htmlFor="source">Source</Label>
-              <Select
-                value={filters.source}
-                onValueChange={(value) => setFilters(prev => ({ ...prev, source: value }))}
-              >
+              <Select value={filters.source} onValueChange={value => setFilters(prev => ({
+              ...prev,
+              source: value
+            }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select source" />
                 </SelectTrigger>
@@ -404,18 +369,10 @@ export default function ProcessedOrders() {
             <Button type="submit" disabled={isLoading}>
               Apply Filters
             </Button>
-            <Button 
-              onClick={fetchAllEnhancedData} 
-              disabled={isLoading || enhancedDataLoading || orders.length === 0}
-              variant="outline"
-            >
+            <Button onClick={fetchAllEnhancedData} disabled={isLoading || enhancedDataLoading || orders.length === 0} variant="outline">
               {enhancedDataLoading ? "Loading..." : "Fetch All Details"}
             </Button>
-            <Button 
-              onClick={() => setShowEnhancedColumns(!showEnhancedColumns)}
-              variant="outline"
-              size="sm"
-            >
+            <Button onClick={() => setShowEnhancedColumns(!showEnhancedColumns)} variant="outline" size="sm">
               {showEnhancedColumns ? "Hide" : "Show"} Enhanced Data
             </Button>
           </form>
@@ -446,19 +403,17 @@ export default function ProcessedOrders() {
                   <TableHead>Received Date</TableHead>
                   <TableHead>Processed Date</TableHead>
                   <TableHead>Tracking</TableHead>
-                  {showEnhancedColumns && (
-                    <>
+                  {showEnhancedColumns && <>
                       <TableHead>SKU</TableHead>
+                      
                       <TableHead>Cost £</TableHead>
                       <TableHead>Shipping Freight £</TableHead>
-                    </>
-                  )}
+                    </>}
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.pkOrderID}>
+                {orders.map(order => <TableRow key={order.pkOrderID}>
                     <TableCell className="font-mono text-xs">{order.nOrderId}</TableCell>
                     <TableCell>{order.ReferenceNum}</TableCell>
                     <TableCell>
@@ -476,72 +431,40 @@ export default function ProcessedOrders() {
                     <TableCell>{new Date(order.dReceivedDate).toLocaleDateString()}</TableCell>
                     <TableCell>{new Date(order.dProcessedOn).toLocaleDateString()}</TableCell>
                     <TableCell className="font-mono text-xs">{order.PostalTrackingNumber}</TableCell>
-                    {showEnhancedColumns && (
-                      <>
+                    {showEnhancedColumns && <>
                         <TableCell>
-                          {order.enhancedDataLoading ? (
-                            <div className="animate-pulse">Loading...</div>
-                          ) : order.enhancedDataError ? (
-                            <div className="text-destructive text-xs">Error</div>
-                          ) : (
-                            order.sku || "N/A"
-                          )}
+                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.enhancedDataError ? <div className="text-destructive text-xs">Error</div> : order.sku || "N/A"}
+                        </TableCell>
+                        
+                        <TableCell>
+                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.costGBP || "N/A"}
                         </TableCell>
                         <TableCell>
-                          {order.enhancedDataLoading ? (
-                            <div className="animate-pulse">Loading...</div>
-                          ) : (
-                            order.costGBP || "N/A"
-                          )}
+                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.shippingFreight || "N/A"}
                         </TableCell>
-                        <TableCell>
-                          {order.enhancedDataLoading ? (
-                            <div className="animate-pulse">Loading...</div>
-                          ) : (
-                            order.shippingFreight || "N/A"
-                          )}
-                        </TableCell>
-                      </>
-                    )}
+                      </>}
                     <TableCell>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => fetchEnhancedDataForOrder(order.pkOrderID)}
-                        disabled={order.enhancedDataLoading || !!order.sku}
-                      >
+                      <Button size="sm" variant="outline" onClick={() => fetchEnhancedDataForOrder(order.pkOrderID)} disabled={order.enhancedDataLoading || !!order.sku}>
                         {order.enhancedDataLoading ? "Loading..." : order.sku ? "Loaded" : "Fetch Details"}
                       </Button>
                     </TableCell>
-                  </TableRow>
-                ))}
+                  </TableRow>)}
               </TableBody>
             </Table>
           </div>
           
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4">
-              <Button
-                variant="outline"
-                onClick={() => fetchOrders(pagination.pageNumber - 1)}
-                disabled={pagination.pageNumber <= 1 || isLoading}
-              >
+          {pagination.totalPages > 1 && <div className="flex items-center justify-between pt-4">
+              <Button variant="outline" onClick={() => fetchOrders(pagination.pageNumber - 1)} disabled={pagination.pageNumber <= 1 || isLoading}>
                 Previous
               </Button>
               <span className="text-sm text-muted-foreground">
                 Showing {orders.length} of {pagination.totalEntries} orders
               </span>
-              <Button
-                variant="outline"
-                onClick={() => fetchOrders(pagination.pageNumber + 1)}
-                disabled={pagination.pageNumber >= pagination.totalPages || isLoading}
-              >
+              <Button variant="outline" onClick={() => fetchOrders(pagination.pageNumber + 1)} disabled={pagination.pageNumber >= pagination.totalPages || isLoading}>
                 Next
               </Button>
-            </div>
-          )}
+            </div>}
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 }
