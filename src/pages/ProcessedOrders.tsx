@@ -157,35 +157,41 @@ export default function ProcessedOrders() {
       }
 
       if (data?.results && data.results.length > 0) {
-        const result = data.results[0] as EnhancedOrderResult;
+        const result = data.results.find((r: EnhancedOrderResult) => r.orderId === orderId) as EnhancedOrderResult;
         
-        setOrders(prev => prev.map(order => 
-          order.pkOrderID === orderId 
-            ? { 
-                ...order, 
-                sku: result.sku,
-                itemTitle: result.itemTitle,
-                unitValue: result.unitValue,
-                costGBP: result.costGBP,
-                shippingFreight: result.shippingFreight,
-                enhancedDataLoading: false,
-                enhancedDataError: result.error
-              }
-            : order
-        ));
+        if (result) {
+          setOrders(prev => prev.map(order => 
+            order.pkOrderID === orderId 
+              ? { 
+                  ...order, 
+                  sku: result.sku,
+                  itemTitle: result.itemTitle,
+                  unitValue: result.unitValue,
+                  costGBP: result.costGBP,
+                  shippingFreight: result.shippingFreight,
+                  enhancedDataLoading: false,
+                  enhancedDataError: result.error
+                }
+              : order
+          ));
 
-        if (result.error) {
-          toast({
-            title: "Partial data loaded",
-            description: `Order ${orderId}: ${result.error}`,
-            variant: "destructive",
-          });
+          if (result.error) {
+            toast({
+              title: "Partial data loaded",
+              description: `Order ${orderId}: ${result.error}`,
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Enhanced data loaded",
+              description: `Successfully loaded details for order ${orderId}`,
+            });
+          }
         } else {
-          toast({
-            title: "Enhanced data loaded",
-            description: `Successfully loaded details for order ${orderId}`,
-          });
+          throw new Error('No data found for this order');
         }
+      } else {
+        throw new Error('No results returned from API');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch enhanced data';
