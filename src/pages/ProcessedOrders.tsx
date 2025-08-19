@@ -649,7 +649,7 @@ export default function ProcessedOrders() {
                   <SelectContent className="bg-background z-50">
                     <SelectItem value="all">All Sub Sources</SelectItem>
                     <SelectItem value="Wilko">Wilko</SelectItem>
-                    <SelectItem value="RobertDayas">Robert Dyas</SelectItem>
+                    <SelectItem value="Robert Dyas">Robert Dyas</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
