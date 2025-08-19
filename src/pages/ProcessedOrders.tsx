@@ -117,23 +117,47 @@ export default function ProcessedOrders() {
     const shippingFreight = parseFloat(result.shippingFreight || '0');
     const courierCharge = parseFloat(result.courierCharge || '0');
     
-    // Get the appropriate fee based on source
+    // Debug logging to identify source mapping issues
+    console.log('Order Source:', order.Source);
+    console.log('Available fees in result:', {
+      amazonFee: result.amazonFee,
+      bqFee: result.bqFee,
+      ebayFee: result.ebayFee,
+      debenhamsFee: result.debenhamsFee,
+      manomanoFee: result.manomanoFee,
+      onbuyFee: result.onbuyFee,
+      sheinFee: result.sheinFee,
+      shopifyFee: result.shopifyFee,
+      tescoFee: result.tescoFee,
+      theRangeFee: result.theRangeFee,
+      tiktokFee: result.tiktokFee
+    });
+    
+    // Get the appropriate fee based on source - using exact source names from API
     let sourceFeeRate = 0;
     const sourceToFeeMap: { [key: string]: string | undefined } = {
       'AMAZON': result.amazonFee,
       'B&Q': result.bqFee,
       'EBAY': result.ebayFee,
-      'Debenhams': result.debenhamsFee,
-      'Manomano hub': result.manomanoFee,
-      'OnBuy v2': result.onbuyFee,
+      'DEBENHAMS': result.debenhamsFee,
+      'MANOMANO': result.manomanoFee,
+      'ONBUY': result.onbuyFee,
       'SHEIN': result.sheinFee,
       'SHOPIFY': result.shopifyFee,
       'TESCO': result.tescoFee,
+      'THERANGE': result.theRangeFee,
+      'TIKTOK': result.tiktokFee,
+      // Additional mappings for variations in source names
+      'Manomano hub': result.manomanoFee,
+      'OnBuy v2': result.onbuyFee,
+      'TikTok': result.tiktokFee,
       'TheRange': result.theRangeFee,
-      'TikTok': result.tiktokFee
+      'Debenhams': result.debenhamsFee
     };
     
     const sourceFee = sourceToFeeMap[order.Source];
+    console.log('Source fee found:', sourceFee, 'for source:', order.Source);
+    
     if (sourceFee) {
       sourceFeeRate = parseFloat(sourceFee) || 0;
     }
