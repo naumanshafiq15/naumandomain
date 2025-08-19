@@ -82,6 +82,7 @@ interface EnhancedOrderResult {
   theRangeFee?: string;
   tiktokFee?: string;
   robertDyasFee?: string;
+  wayfairFee?: string;
   error?: string;
   success?: boolean;
 }
@@ -132,7 +133,8 @@ export default function ProcessedOrders() {
       tescoFee: result.tescoFee,
       theRangeFee: result.theRangeFee,
       tiktokFee: result.tiktokFee,
-      robertDyasFee: result.robertDyasFee
+      robertDyasFee: result.robertDyasFee,
+      wayfairFee: result.wayfairFee
     });
     
     // Special handling for VIRTUALSTOCK source
@@ -166,6 +168,50 @@ export default function ProcessedOrders() {
         totalCost: Math.round(totalCost * 100) / 100,
         profit: Math.round(profit * 100) / 100,
         vat: 0 // No VAT in cost calculation for VIRTUALSTOCK
+      };
+    }
+
+    // Special handling for WAYFAIRCHANNEL source
+    if (order.Source === 'WAYFAIRCHANNEL') {
+      // WAYFAIRCHANNEL uses different formula
+      const itemTotal = sellingPriceIncVat; // Item Total from API
+      
+      // VATA = Item Total x 0.2
+      const vatA = itemTotal * 0.2;
+      
+      // Marketplace Fee = Item total x Wayfair Fee From extended Properties
+      const wayfairFeeRate = parseFloat(result.wayfairFee || '0');
+      const marketplaceFee = itemTotal * wayfairFeeRate;
+      
+      // Wayfair Price = (Item Total - Marketplace Fee)
+      const wayfairPrice = itemTotal - marketplaceFee;
+      
+      // Total Cost = Cost £ + Sea Freight (no courier charge for Wayfair)
+      const totalCost = costGBP + shippingFreight;
+      
+      // VATB = WayFairPrice - (WayFairPrice/1.2)
+      const vatB = wayfairPrice - (wayfairPrice / 1.2);
+      
+      // Profit = WayFairPrice – Total Cost - VATB
+      const profit = wayfairPrice - totalCost - vatB;
+      
+      console.log('WAYFAIRCHANNEL calculation:', {
+        itemTotal,
+        vatA,
+        wayfairFeeRate,
+        marketplaceFee,
+        wayfairPrice,
+        totalCost,
+        vatB,
+        profit
+      });
+      
+      return {
+        sellingPriceExVat: Math.round((wayfairPrice / 1.2) * 100) / 100, // Price excluding VAT
+        marketplaceFee: Math.round(marketplaceFee * 100) / 100,
+        totalCost: Math.round(totalCost * 100) / 100,
+        profit: Math.round(profit * 100) / 100,
+        vat: Math.round(vatB * 100) / 100
       };
     }
     

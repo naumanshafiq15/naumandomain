@@ -141,6 +141,7 @@ serve(async (req) => {
           let theRangeFee = null;
           let tiktokFee = null;
           let robertDyasFee = null;
+          let wayfairFee = null;
 
           if (Array.isArray(inventoryData)) {
             for (const property of inventoryData) {
@@ -177,6 +178,8 @@ serve(async (req) => {
                 tiktokFee = propValue;
               } else if (propName === "Z-Robert Dyas Fee") {
                 robertDyasFee = propValue;
+              } else if (propName === "Z-Wayfair Fee") {
+                wayfairFee = propValue;
               }
             }
           }
@@ -209,6 +212,7 @@ serve(async (req) => {
             theRangeFee,
             tiktokFee,
             robertDyasFee,
+            wayfairFee,
             success: true
           };
 
