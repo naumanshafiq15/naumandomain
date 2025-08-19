@@ -27,6 +27,7 @@ interface ProcessedOrder {
   PostalTrackingNumber: string;
   cCountry: string;
   Source: string;
+  SubSource?: string;
   PostalServiceName: string;
   ReferenceNum: string;
   Address1: string;
@@ -83,6 +84,7 @@ interface EnhancedOrderResult {
   tiktokFee?: string;
   robertDyasFee?: string;
   wayfairFee?: string;
+  wilkoFee?: string;
   error?: string;
   success?: boolean;
 }
@@ -134,7 +136,8 @@ export default function ProcessedOrders() {
       theRangeFee: result.theRangeFee,
       tiktokFee: result.tiktokFee,
       robertDyasFee: result.robertDyasFee,
-      wayfairFee: result.wayfairFee
+      wayfairFee: result.wayfairFee,
+      wilkoFee: result.wilkoFee
     });
     
     // Special handling for VIRTUALSTOCK source
@@ -143,9 +146,20 @@ export default function ProcessedOrders() {
       // Selling Price (Excluding VAT) = Price with VAT ÷ 1.2
       const sellingPriceExVat = sellingPriceIncVat / 1.2;
       
-      // Marketplace Fee = Selling Price (Excluding VAT) × Robert Dyas Fee
-      const robertDyasFeeRate = parseFloat(result.robertDyasFee || '0');
-      const marketplaceFee = sellingPriceExVat * robertDyasFeeRate;
+      // Determine marketplace fee based on SubSource
+      let marketplaceFeeRate = 0;
+      let feeType = '';
+      
+      if (order.SubSource?.toLowerCase().includes('robertdyas')) {
+        marketplaceFeeRate = parseFloat(result.robertDyasFee || '0');
+        feeType = 'Robert Dyas';
+      } else if (order.SubSource?.toLowerCase().includes('wilko')) {
+        marketplaceFeeRate = parseFloat(result.wilkoFee || '0');
+        feeType = 'Wilko';
+      }
+      
+      // Marketplace Fee = Selling Price (Excluding VAT) × Fee Rate
+      const marketplaceFee = sellingPriceExVat * marketplaceFeeRate;
       
       // Total Cost = Cost (£) + Sea Freight + Courier Charges + Marketplace Fee (no VAT)
       const totalCost = costGBP + shippingFreight + courierCharge + marketplaceFee;
@@ -154,9 +168,11 @@ export default function ProcessedOrders() {
       const profit = sellingPriceExVat - totalCost;
       
       console.log('VIRTUALSTOCK calculation:', {
+        subSource: order.SubSource,
+        feeType,
         sellingPriceIncVat,
         sellingPriceExVat,
-        robertDyasFeeRate,
+        marketplaceFeeRate,
         marketplaceFee,
         totalCost,
         profit
