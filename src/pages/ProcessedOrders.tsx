@@ -38,6 +38,7 @@ interface ProcessedOrder {
   AccountName: string;
   // Enhanced data
   sku?: string;
+  orderQty?: number;
   itemTitle?: string;
   unitValue?: number;
   costGBP?: string;
@@ -58,6 +59,7 @@ interface ProcessedOrdersResponse {
 interface EnhancedOrderResult {
   orderId: string;
   sku?: string;
+  orderQty?: number;
   itemTitle?: string;
   unitValue?: number;
   costGBP?: string;
@@ -166,6 +168,7 @@ export default function ProcessedOrders() {
           setOrders(prev => prev.map(order => order.pkOrderID === orderId ? {
             ...order,
             sku: result.sku,
+            orderQty: result.orderQty,
             itemTitle: result.itemTitle,
             unitValue: result.unitValue,
             costGBP: result.costGBP,
@@ -233,6 +236,7 @@ export default function ProcessedOrders() {
             return {
               ...order,
               sku: result.sku,
+              orderQty: result.orderQty,
               itemTitle: result.itemTitle,
               unitValue: result.unitValue,
               costGBP: result.costGBP,
@@ -409,7 +413,7 @@ export default function ProcessedOrders() {
                   <TableHead>Tracking</TableHead>
                   {showEnhancedColumns && <>
                       <TableHead>SKU</TableHead>
-                      
+                      <TableHead>Order Qty</TableHead>
                       <TableHead>Cost £</TableHead>
                       <TableHead>Shipping Freight £</TableHead>
                       <TableHead>Courier Charge £</TableHead>
@@ -440,7 +444,9 @@ export default function ProcessedOrders() {
                         <TableCell>
                           {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.enhancedDataError ? <div className="text-destructive text-xs">Error</div> : order.sku || "N/A"}
                         </TableCell>
-                        
+                        <TableCell>
+                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.orderQty || "N/A"}
+                        </TableCell>
                         <TableCell>
                           {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.costGBP || "N/A"}
                         </TableCell>

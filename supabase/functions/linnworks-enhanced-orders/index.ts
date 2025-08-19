@@ -93,6 +93,7 @@ serve(async (req) => {
               orderId,
               error: `No SKU found - received ${typeof orderItemsData} with keys: ${orderItemsData && typeof orderItemsData === 'object' ? Object.keys(orderItemsData).join(', ') : 'N/A'}`,
               sku: null,
+              orderQty: null,
               costGBP: null,
               shippingFreight: null,
               courierCharge: null
@@ -141,10 +142,18 @@ serve(async (req) => {
             }
           }
 
+          // Extract OrderQty from order items data
+          let orderQty = null;
+          if (Array.isArray(orderItemsData) && orderItemsData.length > 0) {
+            orderQty = orderItemsData[0]?.OrderQty || null;
+          } else if (orderItemsData && typeof orderItemsData === 'object') {
+            orderQty = orderItemsData.OrderQty || null;
+          }
+
           return {
             orderId,
             sku,
-            itemTitle: orderItemsData?.ItemTitle || null,
+            orderQty,
             unitValue: orderItemsData?.UnitValue || null,
             costGBP,
             shippingFreight,
@@ -158,6 +167,7 @@ serve(async (req) => {
             orderId,
             error: error.message,
             sku: null,
+            orderQty: null,
             costGBP: null,
             shippingFreight: null,
             courierCharge: null
