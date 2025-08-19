@@ -677,7 +677,7 @@ export default function ProcessedOrders() {
               <Select value={filters.source} onValueChange={value => setFilters(prev => ({
               ...prev,
               source: value,
-              subSource: value === "VIRTUALSTOCK" ? prev.subSource : "all" // Reset subSource when not VIRTUALSTOCK
+              subSource: (value === "VIRTUALSTOCK" || value === "Mirakl MP") ? prev.subSource : "all" // Reset subSource when not VIRTUALSTOCK or Mirakl MP
             }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select source" />
@@ -700,7 +700,7 @@ export default function ProcessedOrders() {
                 </SelectContent>
               </Select>
             </div>
-            {filters.source === "VIRTUALSTOCK" && (
+            {(filters.source === "VIRTUALSTOCK" || filters.source === "Mirakl MP") && (
               <div className="grid w-full max-w-sm items-center gap-1.5">
                 <Label htmlFor="subSource">Sub Source</Label>
                 <Select value={filters.subSource || "all"} onValueChange={value => setFilters(prev => ({
@@ -712,8 +712,18 @@ export default function ProcessedOrders() {
                   </SelectTrigger>
                   <SelectContent className="bg-background z-50">
                     <SelectItem value="all">All Sub Sources</SelectItem>
-                    <SelectItem value="Wilko">Wilko</SelectItem>
-                    <SelectItem value="Robert Dyas">Robert Dyas</SelectItem>
+                    {filters.source === "VIRTUALSTOCK" && (
+                      <>
+                        <SelectItem value="Wilko">Wilko</SelectItem>
+                        <SelectItem value="Robert Dyas">Robert Dyas</SelectItem>
+                      </>
+                    )}
+                    {filters.source === "Mirakl MP" && (
+                      <>
+                        <SelectItem value="B&Q">B&Q</SelectItem>
+                        <SelectItem value="Debenhams">Debenhams</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
