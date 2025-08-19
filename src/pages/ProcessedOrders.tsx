@@ -12,17 +12,39 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProcessedOrder {
-  nOrderId: string;
   pkOrderID: string;
-  ReferenceNum: string;
-  Subtotal: string;
-  fTotalCharge: string;
-  PostalServiceName: string;
-  Source: string;
-  SubSource: string;
-  fTax: string;
+  nOrderId: number;
+  dReceivedDate: string;
   dProcessedOn: string;
-  ProfitMargin: string;
+  timeDiff: number;
+  fPostageCost: number;
+  fTotalCharge: number;
+  PostageCostExTax: number;
+  Subtotal: number;
+  fTax: number;
+  TotalDiscount: number;
+  ProfitMargin: number;
+  cCurrency: string;
+  PostalTrackingNumber: string;
+  cCountry: string;
+  Source: string;
+  PostalServiceName: string;
+  ReferenceNum: string;
+  Address1: string;
+  Town: string;
+  BuyerPhoneNumber: string;
+  cFullName: string;
+  cEmailAddress: string;
+  cPostCode: string;
+  AccountName: string;
+  // Enhanced data
+  sku?: string;
+  itemTitle?: string;
+  unitValue?: number;
+  costGBP?: string;
+  shippingFreight?: string;
+  enhancedDataLoading?: boolean;
+  enhancedDataError?: string;
 }
 
 interface ProcessedOrdersResponse {
@@ -35,9 +57,23 @@ interface ProcessedOrdersResponse {
   };
 }
 
+interface EnhancedOrderResult {
+  orderId: string;
+  sku?: string;
+  itemTitle?: string;
+  unitValue?: number;
+  costGBP?: string;
+  shippingFreight?: string;
+  error?: string;
+  success?: boolean;
+}
+
 export default function ProcessedOrders() {
   const { authToken, isLoading: authLoading, error: authError, authenticate } = useLinnworksAuth();
   const [orders, setOrders] = useState<ProcessedOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [enhancedDataLoading, setEnhancedDataLoading] = useState(false);
+  const [showEnhancedColumns, setShowEnhancedColumns] = useState(false);
   const [pagination, setPagination] = useState({
     pageNumber: 1,
     entriesPerPage: 200,
@@ -49,7 +85,6 @@ export default function ProcessedOrders() {
     toDate: "2025-09-01",
     source: "DIRECT",
   });
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const fetchOrders = async (pageNumber = 1) => {
@@ -99,6 +134,133 @@ export default function ProcessedOrders() {
     }
   };
 
+  const fetchEnhancedDataForOrder = async (orderId: string) => {
+    if (!authToken) return;
+
+    // Mark this order as loading
+    setOrders(prev => prev.map(order => 
+      order.pkOrderID === orderId 
+        ? { ...order, enhancedDataLoading: true, enhancedDataError: undefined }
+        : order
+    ));
+
+    try {
+      const { data, error: fetchError } = await supabase.functions.invoke('linnworks-enhanced-orders', {
+        body: {
+          authToken,
+          orderIds: [orderId]
+        }
+      });
+
+      if (fetchError) {
+        throw new Error(fetchError.message);
+      }
+
+      if (data?.results && data.results.length > 0) {
+        const result = data.results[0] as EnhancedOrderResult;
+        
+        setOrders(prev => prev.map(order => 
+          order.pkOrderID === orderId 
+            ? { 
+                ...order, 
+                sku: result.sku,
+                itemTitle: result.itemTitle,
+                unitValue: result.unitValue,
+                costGBP: result.costGBP,
+                shippingFreight: result.shippingFreight,
+                enhancedDataLoading: false,
+                enhancedDataError: result.error
+              }
+            : order
+        ));
+
+        if (result.error) {
+          toast({
+            title: "Partial data loaded",
+            description: `Order ${orderId}: ${result.error}`,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Enhanced data loaded",
+            description: `Successfully loaded details for order ${orderId}`,
+          });
+        }
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch enhanced data';
+      setOrders(prev => prev.map(order => 
+        order.pkOrderID === orderId 
+          ? { ...order, enhancedDataLoading: false, enhancedDataError: errorMessage }
+          : order
+      ));
+      
+      toast({
+        title: "Error loading enhanced data",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchAllEnhancedData = async () => {
+    if (!authToken || orders.length === 0) return;
+
+    setEnhancedDataLoading(true);
+    
+    try {
+      const orderIds = orders.map(order => order.pkOrderID);
+      
+      const { data, error: fetchError } = await supabase.functions.invoke('linnworks-enhanced-orders', {
+        body: {
+          authToken,
+          orderIds: orderIds
+        }
+      });
+
+      if (fetchError) {
+        throw new Error(fetchError.message);
+      }
+
+      if (data?.results) {
+        const resultsMap = new Map(data.results.map((result: EnhancedOrderResult) => [result.orderId, result]));
+        
+        setOrders(prev => prev.map(order => {
+          const result = resultsMap.get(order.pkOrderID) as EnhancedOrderResult;
+          if (result) {
+            return {
+              ...order,
+              sku: result.sku,
+              itemTitle: result.itemTitle,
+              unitValue: result.unitValue,
+              costGBP: result.costGBP,
+              shippingFreight: result.shippingFreight,
+              enhancedDataLoading: false,
+              enhancedDataError: result.error
+            };
+          }
+          return order;
+        }));
+
+        setShowEnhancedColumns(true);
+        
+        toast({
+          title: "Enhanced data loaded",
+          description: `Processed ${data.successful} successful, ${data.failed} failed out of ${data.processed} orders`,
+        });
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch enhanced data';
+      toast({
+        title: "Error loading enhanced data",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setEnhancedDataLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (authToken) {
       fetchOrders();
@@ -111,11 +273,8 @@ export default function ProcessedOrders() {
   };
 
   const handleRefresh = async () => {
-    // First authenticate to get a fresh token
     await authenticate();
-    // The useEffect will automatically call fetchOrders when the new authToken is received
   };
-
 
   if (authLoading) {
     return (
@@ -216,6 +375,20 @@ export default function ProcessedOrders() {
             <Button type="submit" disabled={isLoading}>
               Apply Filters
             </Button>
+            <Button 
+              onClick={fetchAllEnhancedData} 
+              disabled={isLoading || enhancedDataLoading || orders.length === 0}
+              variant="outline"
+            >
+              {enhancedDataLoading ? "Loading..." : "Fetch All Details"}
+            </Button>
+            <Button 
+              onClick={() => setShowEnhancedColumns(!showEnhancedColumns)}
+              variant="outline"
+              size="sm"
+            >
+              {showEnhancedColumns ? "Hide" : "Show"} Enhanced Data
+            </Button>
           </form>
         </CardContent>
       </Card>
@@ -235,45 +408,91 @@ export default function ProcessedOrders() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Order ID</TableHead>
-                  <TableHead>PK Order ID</TableHead>
-                  <TableHead>Reference Number</TableHead>
-                  <TableHead>Subtotal</TableHead>
-                  <TableHead>Total Charge</TableHead>
-                  <TableHead>Postal Service</TableHead>
+                  <TableHead>Reference</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Country</TableHead>
                   <TableHead>Source</TableHead>
-                  <TableHead>Sub Source</TableHead>
-                  <TableHead>Tax</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Currency</TableHead>
+                  <TableHead>Received Date</TableHead>
+                  <TableHead>Processed Date</TableHead>
+                  <TableHead>Tracking</TableHead>
+                  {showEnhancedColumns && (
+                    <>
+                      <TableHead>SKU</TableHead>
+                      <TableHead>Item Title</TableHead>
+                      <TableHead>Cost £</TableHead>
+                      <TableHead>Shipping Freight £</TableHead>
+                    </>
+                  )}
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {orders.map((order) => (
                   <TableRow key={order.pkOrderID}>
-                    <TableCell className="font-medium">
-                      {order.nOrderId}
-                    </TableCell>
+                    <TableCell className="font-mono text-xs">{order.nOrderId}</TableCell>
+                    <TableCell>{order.ReferenceNum}</TableCell>
                     <TableCell>
-                      {order.pkOrderID}
+                      <div>
+                        <div className="font-medium">{order.cFullName}</div>
+                        <div className="text-sm text-muted-foreground">{order.cEmailAddress}</div>
+                      </div>
                     </TableCell>
+                    <TableCell>{order.cCountry}</TableCell>
                     <TableCell>
-                      {order.ReferenceNum}
+                      <Badge variant="secondary">{order.Source}</Badge>
                     </TableCell>
+                    <TableCell>{order.fTotalCharge?.toFixed(2)}</TableCell>
+                    <TableCell>{order.cCurrency}</TableCell>
+                    <TableCell>{new Date(order.dReceivedDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(order.dProcessedOn).toLocaleDateString()}</TableCell>
+                    <TableCell className="font-mono text-xs">{order.PostalTrackingNumber}</TableCell>
+                    {showEnhancedColumns && (
+                      <>
+                        <TableCell>
+                          {order.enhancedDataLoading ? (
+                            <div className="animate-pulse">Loading...</div>
+                          ) : order.enhancedDataError ? (
+                            <div className="text-destructive text-xs">Error</div>
+                          ) : (
+                            order.sku || "N/A"
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {order.enhancedDataLoading ? (
+                            <div className="animate-pulse">Loading...</div>
+                          ) : (
+                            <div className="max-w-[200px] truncate" title={order.itemTitle}>
+                              {order.itemTitle || "N/A"}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {order.enhancedDataLoading ? (
+                            <div className="animate-pulse">Loading...</div>
+                          ) : (
+                            order.costGBP || "N/A"
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {order.enhancedDataLoading ? (
+                            <div className="animate-pulse">Loading...</div>
+                          ) : (
+                            order.shippingFreight || "N/A"
+                          )}
+                        </TableCell>
+                      </>
+                    )}
                     <TableCell>
-                      {order.Subtotal}
-                    </TableCell>
-                    <TableCell>
-                      {order.fTotalCharge}
-                    </TableCell>
-                    <TableCell>
-                      {order.PostalServiceName}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{order.Source}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {order.SubSource}
-                    </TableCell>
-                    <TableCell>
-                      {order.fTax}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => fetchEnhancedDataForOrder(order.pkOrderID)}
+                        disabled={order.enhancedDataLoading || !!order.sku}
+                      >
+                        {order.enhancedDataLoading ? "Loading..." : order.sku ? "Loaded" : "Fetch Details"}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
