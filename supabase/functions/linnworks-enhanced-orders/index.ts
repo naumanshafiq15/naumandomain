@@ -143,6 +143,8 @@ serve(async (req) => {
           let robertDyasFee = null;
           let wayfairFee = null;
           let wilkoFee = null;
+          let grouponFee = null;
+          let grouponPrice = null;
 
           if (Array.isArray(inventoryData)) {
             for (const property of inventoryData) {
@@ -183,6 +185,10 @@ serve(async (req) => {
                 wayfairFee = propValue;
               } else if (propName === "Z-Wilko Fee") {
                 wilkoFee = propValue;
+              } else if (propName === "Z-Groupon Fee") {
+                grouponFee = propValue;
+              } else if (propName === "Z-Groupon Price") {
+                grouponPrice = propValue;
               }
             }
           }
@@ -217,6 +223,8 @@ serve(async (req) => {
             robertDyasFee,
             wayfairFee,
             wilkoFee,
+            grouponFee,
+            grouponPrice,
             success: true
           };
 

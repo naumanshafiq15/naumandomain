@@ -85,6 +85,8 @@ interface EnhancedOrderResult {
   robertDyasFee?: string;
   wayfairFee?: string;
   wilkoFee?: string;
+  grouponFee?: string;
+  grouponPrice?: string;
   error?: string;
   success?: boolean;
 }
@@ -137,7 +139,9 @@ export default function ProcessedOrders() {
       tiktokFee: result.tiktokFee,
       robertDyasFee: result.robertDyasFee,
       wayfairFee: result.wayfairFee,
-      wilkoFee: result.wilkoFee
+      wilkoFee: result.wilkoFee,
+      grouponFee: result.grouponFee,
+      grouponPrice: result.grouponPrice
     });
     
     // Special handling for VIRTUALSTOCK source
@@ -228,6 +232,38 @@ export default function ProcessedOrders() {
         totalCost: Math.round(totalCost * 100) / 100,
         profit: Math.round(profit * 100) / 100,
         vat: Math.round(vatB * 100) / 100
+      };
+    }
+
+    // Special handling for GROUPON source
+    if (order.Source === 'GROUPON') {
+      // GROUPON uses Z-Groupon Price from extended properties as selling price
+      const grouponPriceValue = parseFloat(result.grouponPrice || '0');
+      
+      // Marketplace Fee = Selling Price × Z-Groupon Fee
+      const grouponFeeRate = parseFloat(result.grouponFee || '0');
+      const marketplaceFee = grouponPriceValue * grouponFeeRate;
+      
+      // Total Cost = Cost (£) + Sea Freight + Courier Charges + Marketplace Fee
+      const totalCost = costGBP + shippingFreight + courierCharge + marketplaceFee;
+      
+      // Profit = Z-Groupon Price - Total Cost
+      const profit = grouponPriceValue - totalCost;
+      
+      console.log('GROUPON calculation:', {
+        grouponPriceValue,
+        grouponFeeRate,
+        marketplaceFee,
+        totalCost,
+        profit
+      });
+      
+      return {
+        sellingPriceExVat: Math.round(grouponPriceValue * 100) / 100, // Using Groupon price
+        marketplaceFee: Math.round(marketplaceFee * 100) / 100,
+        totalCost: Math.round(totalCost * 100) / 100,
+        profit: Math.round(profit * 100) / 100,
+        vat: 0 // No VAT calculation for GROUPON
       };
     }
     
