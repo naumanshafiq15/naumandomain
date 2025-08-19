@@ -58,6 +58,17 @@ serve(async (req) => {
     let costGBP = null;
     let shippingFreight = null;
     let courierCharge = null;
+    let amazonFee = null;
+    let bqFee = null;
+    let ebayFee = null;
+    let debenhamsFee = null;
+    let manomanoFee = null;
+    let onbuyFee = null;
+    let sheinFee = null;
+    let shopifyFee = null;
+    let tescoFee = null;
+    let theRangeFee = null;
+    let tiktokFee = null;
 
     if (Array.isArray(data)) {
       for (const property of data) {
@@ -67,6 +78,28 @@ serve(async (req) => {
           shippingFreight = property.PropertyValue;
         } else if (property.ProperyName === "Z-Courier Charge / Account Only") {
           courierCharge = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Amazon Fee") {
+          amazonFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-B&Q Fee") {
+          bqFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Ebay Fee") {
+          ebayFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Debenhams Fee") {
+          debenhamsFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Manomano Fee") {
+          manomanoFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Onbuy Fee") {
+          onbuyFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Shein Fee") {
+          sheinFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Shopify Fee") {
+          shopifyFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Tesco Fee") {
+          tescoFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-TheRange Fee") {
+          theRangeFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Tiktok Fee") {
+          tiktokFee = property.PropertyValue;
         }
       }
     }
@@ -77,6 +110,17 @@ serve(async (req) => {
         costGBP,
         shippingFreight,
         courierCharge,
+        amazonFee,
+        bqFee,
+        ebayFee,
+        debenhamsFee,
+        manomanoFee,
+        onbuyFee,
+        sheinFee,
+        shopifyFee,
+        tescoFee,
+        theRangeFee,
+        tiktokFee,
         hasData: costGBP !== null || shippingFreight !== null || courierCharge !== null
       }),
       { 

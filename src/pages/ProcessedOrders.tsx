@@ -70,6 +70,17 @@ interface EnhancedOrderResult {
   costGBP?: string;
   shippingFreight?: string;
   courierCharge?: string;
+  amazonFee?: string;
+  bqFee?: string;
+  ebayFee?: string;
+  debenhamsFee?: string;
+  manomanoFee?: string;
+  onbuyFee?: string;
+  sheinFee?: string;
+  shopifyFee?: string;
+  tescoFee?: string;
+  theRangeFee?: string;
+  tiktokFee?: string;
   error?: string;
   success?: boolean;
 }
@@ -99,17 +110,36 @@ export default function ProcessedOrders() {
     toast
   } = useToast();
 
-  // Amazon profit calculation helper function
-  const calculateAmazonFields = (order: ProcessedOrder, result: EnhancedOrderResult) => {
-    if (order.Source !== 'AMAZON') return {};
-
+  // Profit calculation helper function for all sources
+  const calculateProfitFields = (order: ProcessedOrder, result: EnhancedOrderResult) => {
     const sellingPriceIncVat = order.fTotalCharge || 0;
     const costGBP = parseFloat(result.costGBP || '0');
     const shippingFreight = parseFloat(result.shippingFreight || '0');
     const courierCharge = parseFloat(result.courierCharge || '0');
     
-    // Marketplace Fee = Selling Price (Inc. VAT) × 0.19
-    const marketplaceFee = sellingPriceIncVat * 0.19;
+    // Get the appropriate fee based on source
+    let sourceFeeRate = 0;
+    const sourceToFeeMap: { [key: string]: string | undefined } = {
+      'AMAZON': result.amazonFee,
+      'B&Q': result.bqFee,
+      'EBAY': result.ebayFee,
+      'Debenhams': result.debenhamsFee,
+      'Manomano hub': result.manomanoFee,
+      'OnBuy v2': result.onbuyFee,
+      'SHEIN': result.sheinFee,
+      'SHOPIFY': result.shopifyFee,
+      'TESCO': result.tescoFee,
+      'TheRange': result.theRangeFee,
+      'TikTok': result.tiktokFee
+    };
+    
+    const sourceFee = sourceToFeeMap[order.Source];
+    if (sourceFee) {
+      sourceFeeRate = parseFloat(sourceFee) || 0;
+    }
+    
+    // Marketplace Fee = Selling Price (Inc. VAT) × Source Fee Rate
+    const marketplaceFee = sellingPriceIncVat * sourceFeeRate;
     
     // VAT = Selling Price Inc. VAT - (Selling Price Inc. VAT / 1.2)
     const vat = sellingPriceIncVat - (sellingPriceIncVat / 1.2);
@@ -210,8 +240,8 @@ export default function ProcessedOrders() {
             courierCharge: result.courierCharge,
             enhancedDataLoading: false,
             enhancedDataError: result.error,
-            // Calculate Amazon-specific fields if it's an Amazon order
-            ...calculateAmazonFields(order, result)
+            // Calculate profit fields for all sources
+            ...calculateProfitFields(order, result)
           } : order));
           if (result.error) {
             toast({
@@ -280,8 +310,8 @@ export default function ProcessedOrders() {
               courierCharge: result.courierCharge,
               enhancedDataLoading: false,
               enhancedDataError: result.error,
-              // Calculate Amazon-specific fields if it's an Amazon order
-              ...calculateAmazonFields(order, result)
+              // Calculate profit fields for all sources
+              ...calculateProfitFields(order, result)
             };
           }
           return order;
@@ -482,16 +512,16 @@ export default function ProcessedOrders() {
                           {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.courierCharge || "N/A"}
                         </TableCell>
                         <TableCell className="bg-green-200">
-                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.Source === 'AMAZON' ? (order.marketplaceFee?.toFixed(2) || "N/A") : "N/A"}
+                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : (order.marketplaceFee?.toFixed(2) || "N/A")}
                         </TableCell>
                         <TableCell className="bg-green-200">
-                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.Source === 'AMAZON' ? (order.vat?.toFixed(2) || "N/A") : "N/A"}
+                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : (order.vat?.toFixed(2) || "N/A")}
                         </TableCell>
                         <TableCell className="bg-green-200">
-                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.Source === 'AMAZON' ? (order.totalCost?.toFixed(2) || "N/A") : "N/A"}
+                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : (order.totalCost?.toFixed(2) || "N/A")}
                         </TableCell>
                         <TableCell className={`bg-green-200 ${order.profit && order.profit < 0 ? "text-destructive font-semibold" : order.profit && order.profit > 0 ? "text-green-600 font-semibold" : ""}`}>
-                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : order.Source === 'AMAZON' ? (order.profit?.toFixed(2) || "N/A") : "N/A"}
+                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : (order.profit?.toFixed(2) || "N/A")}
                         </TableCell>
                       </>}
                     <TableCell>
