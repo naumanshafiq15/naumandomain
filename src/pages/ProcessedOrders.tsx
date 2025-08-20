@@ -50,9 +50,10 @@ interface ProcessedOrder {
   costGBP?: string;
   shippingFreight?: string;
   courierCharge?: string;
-  // Calculated fields for Amazon orders
+  // Calculated fields
   marketplaceFee?: number;
   vat?: number;
+  vatA?: number; // For Wayfair VATA
   totalCost?: number;
   profit?: number;
   enhancedDataLoading?: boolean;
@@ -250,7 +251,8 @@ export default function ProcessedOrders() {
         marketplaceFee: Math.round(marketplaceFee * 100) / 100,
         totalCost: Math.round(totalCost * 100) / 100,
         profit: Math.round(profit * 100) / 100,
-        vat: Math.round(vatB * 100) / 100
+        vat: Math.round(vatB * 100) / 100, // VATB for display
+        vatA: Math.round(vatA * 100) / 100 // VATA for Wayfair
       };
     }
 
@@ -865,7 +867,16 @@ export default function ProcessedOrders() {
                           {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : (order.marketplaceFee?.toFixed(2) || "N/A")}
                         </TableCell>
                         <TableCell className="bg-green-200">
-                          {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : (order.vat?.toFixed(2) || "N/A")}
+                          {order.enhancedDataLoading ? (
+                            <div className="animate-pulse">Loading...</div>
+                          ) : order.Source === 'WAYFAIRCHANNEL' && order.vatA !== undefined ? (
+                            <div className="text-xs">
+                              <div>VATA: {order.vatA.toFixed(2)}</div>
+                              <div>VATB: {(order.vat || 0).toFixed(2)}</div>
+                            </div>
+                          ) : (
+                            order.vat?.toFixed(2) || "N/A"
+                          )}
                         </TableCell>
                         <TableCell className="bg-green-200">
                           {order.enhancedDataLoading ? <div className="animate-pulse">Loading...</div> : (order.totalCost?.toFixed(2) || "N/A")}
