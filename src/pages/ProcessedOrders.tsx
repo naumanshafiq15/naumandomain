@@ -275,6 +275,52 @@ export default function ProcessedOrders() {
         vat: 0 // No VAT calculation for GROUPON
       };
     }
+
+    // Special handling for MIRAKL MP source
+    if (order.Source === 'Mirakl MP') {
+      // Determine marketplace fee based on SubSource
+      let marketplaceFeeRate = 0;
+      let feeType = '';
+      
+      if (order.SubSource?.toLowerCase().includes('b&q')) {
+        marketplaceFeeRate = parseFloat(result.bqFee || '0');
+        feeType = 'B&Q';
+      } else if (order.SubSource?.toLowerCase().includes('debenhams')) {
+        marketplaceFeeRate = parseFloat(result.debenhamsFee || '0');
+        feeType = 'Debenhams';
+      }
+      
+      // Marketplace Fee = Selling Price (Inc. VAT) × Fee Rate
+      const marketplaceFee = sellingPriceIncVat * marketplaceFeeRate;
+      
+      // VAT = Selling Price Inc. VAT - (Selling Price Inc. VAT / 1.2)
+      const vat = sellingPriceIncVat - (sellingPriceIncVat / 1.2);
+      
+      // Total Cost = Cost (£) + Sea Freight + Courier Charges + Marketplace Fee + VAT
+      const totalCost = costGBP + shippingFreight + courierCharge + marketplaceFee + vat;
+      
+      // Profit = Selling Price (Inc. VAT) - Total Cost
+      const profit = sellingPriceIncVat - totalCost;
+      
+      console.log('MIRAKL MP calculation:', {
+        subSource: order.SubSource,
+        feeType,
+        sellingPriceIncVat,
+        marketplaceFeeRate,
+        marketplaceFee,
+        vat,
+        totalCost,
+        profit
+      });
+      
+      return {
+        sellingPriceExVat: Math.round((sellingPriceIncVat / 1.2) * 100) / 100,
+        marketplaceFee: Math.round(marketplaceFee * 100) / 100,
+        totalCost: Math.round(totalCost * 100) / 100,
+        profit: Math.round(profit * 100) / 100,
+        vat: Math.round(vat * 100) / 100
+      };
+    }
     
     // Get the appropriate fee based on source - using exact source names from API
     let sourceFeeRate = 0;
