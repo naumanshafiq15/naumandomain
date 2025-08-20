@@ -69,6 +69,11 @@ serve(async (req) => {
     let tescoFee = null;
     let theRangeFee = null;
     let tiktokFee = null;
+    let robertDyasFee = null;
+    let wayfairFee = null;
+    let wilkoFee = null;
+    let grouponFee = null;
+    let grouponPrice = null;
 
     if (Array.isArray(data)) {
       for (const property of data) {
@@ -100,6 +105,16 @@ serve(async (req) => {
           theRangeFee = property.PropertyValue;
         } else if (property.ProperyName === "Z-Tiktok Fee") {
           tiktokFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Robert Dyas Fee") {
+          robertDyasFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Wayfair Fee") {
+          wayfairFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Wilko Fee") {
+          wilkoFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Groupon Fee") {
+          grouponFee = property.PropertyValue;
+        } else if (property.ProperyName === "Z-Groupon Price") {
+          grouponPrice = property.PropertyValue;
         }
       }
     }
@@ -121,6 +136,11 @@ serve(async (req) => {
         tescoFee,
         theRangeFee,
         tiktokFee,
+        robertDyasFee,
+        wayfairFee,
+        wilkoFee,
+        grouponFee,
+        grouponPrice,
         hasData: costGBP !== null || shippingFreight !== null || courierCharge !== null
       }),
       { 
