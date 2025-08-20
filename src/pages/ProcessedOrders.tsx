@@ -223,8 +223,8 @@ export default function ProcessedOrders() {
       const wayfairFeeRate = parseFloat(result.wayfairFee || '0');
       const marketplaceFee = itemTotal * wayfairFeeRate;
       
-      // Wayfair Price = (Item Total - Marketplace Fee)
-      const wayfairPrice = itemTotal - marketplaceFee;
+      // Wayfair Price = (Item Total - Marketplace Fee) + VATA
+      const wayfairPrice = (itemTotal - marketplaceFee) + vatA;
       
       // Total Cost = Cost £ + Sea Freight (no courier charge for Wayfair)
       const totalCost = costGBP + shippingFreight;
