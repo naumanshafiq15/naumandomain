@@ -159,27 +159,28 @@ export default function ProcessedOrders() {
       // Selling Price (Excluding VAT) = Price with VAT ÷ 1.2
       const sellingPriceExVat = sellingPriceIncVat / 1.2;
       
-      // Determine marketplace fee based on SubSource
+      // Determine marketplace fee rate and type based on SubSource
       let marketplaceFeeRate = 0;
       let feeType = '';
       
       if (order.SubSource?.toLowerCase().includes('robert dyas')) {
         marketplaceFeeRate = parseFloat(result.robertDyasFee || '0');
         feeType = 'Robert Dyas';
-        // For Robert Dyas: Marketplace Fee = Selling Price (Inc. VAT) × RobertDyas Fee
-        const marketplaceFee = sellingPriceIncVat * marketplaceFeeRate;
       } else if (order.SubSource?.toLowerCase().includes('wilko')) {
         marketplaceFeeRate = parseFloat(result.wilkoFee || '0');
         feeType = 'Wilko';
-        // For Wilko: Marketplace Fee = Selling Price (Excluding VAT) × Fee Rate
-        const marketplaceFee = sellingPriceExVat * marketplaceFeeRate;
       }
       
       // Calculate marketplace fee based on subsource
       let marketplaceFee = 0;
       if (order.SubSource?.toLowerCase().includes('robert dyas')) {
+        // For Robert Dyas: Marketplace Fee = Selling Price (Inc. VAT) × RobertDyas Fee
         marketplaceFee = sellingPriceIncVat * marketplaceFeeRate;
+      } else if (order.SubSource?.toLowerCase().includes('wilko')) {
+        // For Wilko: Marketplace Fee = Selling Price (Excluding VAT) × Fee Rate  
+        marketplaceFee = sellingPriceExVat * marketplaceFeeRate;
       } else {
+        // Default: use excluding VAT price
         marketplaceFee = sellingPriceExVat * marketplaceFeeRate;
       }
       
