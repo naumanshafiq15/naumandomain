@@ -166,13 +166,22 @@ export default function ProcessedOrders() {
       if (order.SubSource?.toLowerCase().includes('robertdyas')) {
         marketplaceFeeRate = parseFloat(result.robertDyasFee || '0');
         feeType = 'Robert Dyas';
+        // For Robert Dyas: Marketplace Fee = Selling Price (Inc. VAT) × RobertDyas Fee
+        const marketplaceFee = sellingPriceIncVat * marketplaceFeeRate;
       } else if (order.SubSource?.toLowerCase().includes('wilko')) {
         marketplaceFeeRate = parseFloat(result.wilkoFee || '0');
         feeType = 'Wilko';
+        // For Wilko: Marketplace Fee = Selling Price (Excluding VAT) × Fee Rate
+        const marketplaceFee = sellingPriceExVat * marketplaceFeeRate;
       }
       
-      // Marketplace Fee = Selling Price (Excluding VAT) × Fee Rate
-      const marketplaceFee = sellingPriceExVat * marketplaceFeeRate;
+      // Calculate marketplace fee based on subsource
+      let marketplaceFee = 0;
+      if (order.SubSource?.toLowerCase().includes('robertdyas')) {
+        marketplaceFee = sellingPriceIncVat * marketplaceFeeRate;
+      } else {
+        marketplaceFee = sellingPriceExVat * marketplaceFeeRate;
+      }
       
       // Total Cost = Cost (£) + Sea Freight + Courier Charges + Marketplace Fee (no VAT)
       const totalCost = costGBP + shippingFreight + courierCharge + marketplaceFee;
