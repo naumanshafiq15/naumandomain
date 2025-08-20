@@ -163,7 +163,7 @@ export default function ProcessedOrders() {
       let marketplaceFeeRate = 0;
       let feeType = '';
       
-      if (order.SubSource?.toLowerCase().includes('robertdyas')) {
+      if (order.SubSource?.toLowerCase().includes('robert dyas')) {
         marketplaceFeeRate = parseFloat(result.robertDyasFee || '0');
         feeType = 'Robert Dyas';
         // For Robert Dyas: Marketplace Fee = Selling Price (Inc. VAT) × RobertDyas Fee
@@ -177,7 +177,7 @@ export default function ProcessedOrders() {
       
       // Calculate marketplace fee based on subsource
       let marketplaceFee = 0;
-      if (order.SubSource?.toLowerCase().includes('robertdyas')) {
+      if (order.SubSource?.toLowerCase().includes('robert dyas')) {
         marketplaceFee = sellingPriceIncVat * marketplaceFeeRate;
       } else {
         marketplaceFee = sellingPriceExVat * marketplaceFeeRate;
