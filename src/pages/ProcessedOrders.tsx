@@ -176,8 +176,8 @@ export default function ProcessedOrders() {
       // Calculate marketplace fee based on subsource
       let marketplaceFee = 0;
       if (order.SubSource?.toLowerCase().includes('robert dyas')) {
-        // For Robert Dyas: Marketplace Fee = Selling Price (Inc. VAT) × RobertDyas Fee
-        marketplaceFee = sellingPriceIncVat * marketplaceFeeRate;
+        // For Robert Dyas: Marketplace Fee = Selling Price (Excluding VAT) × RobertDyas Fee
+        marketplaceFee = sellingPriceExVat * marketplaceFeeRate;
       } else if (order.SubSource?.toLowerCase().includes('wilko')) {
         // For Wilko: Marketplace Fee = Selling Price (Excluding VAT) × Fee Rate  
         marketplaceFee = sellingPriceExVat * marketplaceFeeRate;
