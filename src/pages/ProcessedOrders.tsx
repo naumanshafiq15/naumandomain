@@ -634,40 +634,69 @@ export default function ProcessedOrders() {
   const fetchEnhancedDataForAllOrders = async (orders: ProcessedOrder[]): Promise<ProcessedOrder[]> => {
     if (!authToken || orders.length === 0) return orders;
 
-    const orderIds = orders.map(order => order.pkOrderID);
-    const { data, error: fetchError } = await supabase.functions.invoke('linnworks-enhanced-orders', {
-      body: {
-        authToken,
-        orderIds: orderIds
-      }
-    });
+    const batchSize = 50; // Process orders in smaller batches
+    const updatedOrders = [...orders];
+    
+    for (let i = 0; i < orders.length; i += batchSize) {
+      const batch = orders.slice(i, i + batchSize);
+      const orderIds = batch.map(order => order.pkOrderID);
+      
+      try {
+        console.log(`Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(orders.length/batchSize)} (${orderIds.length} orders)`);
+        
+        const { data, error: fetchError } = await supabase.functions.invoke('linnworks-enhanced-orders', {
+          body: {
+            authToken,
+            orderIds: orderIds
+          }
+        });
 
-    if (fetchError) throw new Error(fetchError.message);
-
-    if (data?.results) {
-      const resultsMap = new Map(data.results.map((result: EnhancedOrderResult) => [result.orderId, result]));
-      return orders.map(order => {
-        const result = resultsMap.get(order.pkOrderID) as EnhancedOrderResult;
-        if (result) {
-          return {
-            ...order,
-            sku: result.sku,
-            orderQty: result.orderQty,
-            itemTitle: result.itemTitle,
-            unitValue: result.unitValue,
-            costGBP: result.costGBP,
-            shippingFreight: result.shippingFreight,
-            courierCharge: result.courierCharge,
-            enhancedDataError: result.error,
-            // Calculate profit fields for all sources
-            ...calculateProfitFields(order, result)
-          };
+        if (fetchError) {
+          console.error(`Batch ${Math.floor(i/batchSize) + 1} error:`, fetchError.message);
+          // Continue with next batch instead of failing completely
+          continue;
         }
-        return order;
-      });
+
+        if (data?.results) {
+          const resultsMap = new Map(data.results.map((result: EnhancedOrderResult) => [result.orderId, result]));
+          
+          // Update the orders in this batch
+          for (let j = 0; j < batch.length; j++) {
+            const orderIndex = i + j;
+            const order = batch[j];
+            const result = resultsMap.get(order.pkOrderID) as EnhancedOrderResult;
+            
+            if (result) {
+              updatedOrders[orderIndex] = {
+                ...order,
+                sku: result.sku,
+                orderQty: result.orderQty,
+                itemTitle: result.itemTitle,
+                unitValue: result.unitValue,
+                costGBP: result.costGBP,
+                shippingFreight: result.shippingFreight,
+                courierCharge: result.courierCharge,
+                enhancedDataError: result.error,
+                // Calculate profit fields for all sources
+                ...calculateProfitFields(order, result)
+              };
+            }
+          }
+        }
+        
+        // Add a small delay between batches to avoid overwhelming the API
+        if (i + batchSize < orders.length) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+      } catch (err) {
+        console.error(`Error processing batch ${Math.floor(i/batchSize) + 1}:`, err);
+        // Continue with next batch
+        continue;
+      }
     }
 
-    return orders;
+    return updatedOrders;
   };
 
   const convertToCSV = (orders: ProcessedOrder[]): string => {
@@ -777,11 +806,16 @@ export default function ProcessedOrders() {
       
       toast({
         title: "Orders fetched",
-        description: `Fetched ${allOrders.length} orders. Now loading enhanced data...`
+        description: `Fetched ${allOrders.length} orders. Now loading enhanced data in batches...`
       });
 
-      // Step 2: Fetch enhanced data for all orders
+      // Step 2: Fetch enhanced data for all orders in batches
       const ordersWithEnhancedData = await fetchEnhancedDataForAllOrders(allOrders);
+
+      toast({
+        title: "Enhanced data loaded",
+        description: "Converting to CSV and downloading..."
+      });
 
       // Step 3: Convert to CSV and download
       const csvContent = convertToCSV(ordersWithEnhancedData);
@@ -794,6 +828,7 @@ export default function ProcessedOrders() {
         description: `Successfully exported ${ordersWithEnhancedData.length} orders to ${filename}`
       });
     } catch (err) {
+      console.error('Export error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to export orders';
       toast({
         title: "Export failed",
