@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, CalendarIcon } from "lucide-react";
+import { Loader2, RefreshCw, CalendarIcon, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -110,6 +110,7 @@ export default function ProcessedOrders() {
   const [isLoading, setIsLoading] = useState(false);
   const [enhancedDataLoading, setEnhancedDataLoading] = useState(false);
   const [showEnhancedColumns, setShowEnhancedColumns] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
   const [pagination, setPagination] = useState({
     pageNumber: 1,
     entriesPerPage: 200,
@@ -582,6 +583,228 @@ export default function ProcessedOrders() {
     }
   };
 
+  const fetchAllOrdersForExport = async (): Promise<ProcessedOrder[]> => {
+    if (!authToken) throw new Error('No auth token available');
+    
+    const allOrders: ProcessedOrder[] = [];
+    let currentPage = 1;
+    let totalPages = 1;
+
+    // Build search filters based on user input
+    const searchFilters = [{
+      SearchField: "Source",
+      SearchTerm: filters.source
+    }];
+    
+    // Add SubSource filter if specified and not "all"
+    if (filters.subSource.trim() && filters.subSource !== "all") {
+      searchFilters.push({
+        SearchField: "SubSource",
+        SearchTerm: filters.subSource
+      });
+    }
+
+    do {
+      const { data, error } = await supabase.functions.invoke('linnworks-processed-orders', {
+        body: {
+          authToken,
+          searchFilters,
+          pageNumber: currentPage,
+          resultsPerPage: 200,
+          fromDate: `${format(filters.fromDate, "yyyy-MM-dd")}T00:00:00`,
+          toDate: `${format(filters.toDate, "yyyy-MM-dd")}T00:00:00`
+        }
+      });
+
+      if (error) throw new Error(error.message);
+      
+      const response = data as ProcessedOrdersResponse;
+      if (response.ProcessedOrders) {
+        allOrders.push(...response.ProcessedOrders.Data);
+        totalPages = response.ProcessedOrders.TotalPages;
+        currentPage++;
+      } else {
+        break;
+      }
+    } while (currentPage <= totalPages);
+
+    return allOrders;
+  };
+
+  const fetchEnhancedDataForAllOrders = async (orders: ProcessedOrder[]): Promise<ProcessedOrder[]> => {
+    if (!authToken || orders.length === 0) return orders;
+
+    const orderIds = orders.map(order => order.pkOrderID);
+    const { data, error: fetchError } = await supabase.functions.invoke('linnworks-enhanced-orders', {
+      body: {
+        authToken,
+        orderIds: orderIds
+      }
+    });
+
+    if (fetchError) throw new Error(fetchError.message);
+
+    if (data?.results) {
+      const resultsMap = new Map(data.results.map((result: EnhancedOrderResult) => [result.orderId, result]));
+      return orders.map(order => {
+        const result = resultsMap.get(order.pkOrderID) as EnhancedOrderResult;
+        if (result) {
+          return {
+            ...order,
+            sku: result.sku,
+            orderQty: result.orderQty,
+            itemTitle: result.itemTitle,
+            unitValue: result.unitValue,
+            costGBP: result.costGBP,
+            shippingFreight: result.shippingFreight,
+            courierCharge: result.courierCharge,
+            enhancedDataError: result.error,
+            // Calculate profit fields for all sources
+            ...calculateProfitFields(order, result)
+          };
+        }
+        return order;
+      });
+    }
+
+    return orders;
+  };
+
+  const convertToCSV = (orders: ProcessedOrder[]): string => {
+    const headers = [
+      'Order ID',
+      'Source',
+      'Sub Source',
+      'Selling Price (Inc. VAT)',
+      'Processed Date',
+      'Received Date',
+      'SKU',
+      'Order Qty',
+      'Item Title',
+      'Unit Value',
+      'Cost £',
+      'Shipping Freight £',
+      'Courier Charge £',
+      'Marketplace Fee £',
+      'VAT £',
+      'VATA £', // For Wayfair
+      'VATB £', // For Wayfair
+      'Total Cost £',
+      'Profit £',
+      'Customer Name',
+      'Email',
+      'Address',
+      'Town',
+      'Postcode',
+      'Country',
+      'Phone',
+      'Tracking Number',
+      'Postal Service',
+      'Reference Number'
+    ];
+
+    const csvRows = [headers.join(',')];
+
+    orders.forEach(order => {
+      const vatDisplay = order.Source === 'WAYFAIRCHANNEL' 
+        ? `${(order.vat || 0).toFixed(2)}` // VATB for Wayfair
+        : `${(order.vat || 0).toFixed(2)}`;
+
+      const vatA = order.Source === 'WAYFAIRCHANNEL' ? `${(order.vatA || 0).toFixed(2)}` : '';
+      const vatB = order.Source === 'WAYFAIRCHANNEL' ? `${(order.vat || 0).toFixed(2)}` : '';
+
+      const row = [
+        `"${order.nOrderId}"`,
+        `"${order.Source}"`,
+        `"${order.SubSource || ''}"`,
+        `"${(order.fTotalCharge || 0).toFixed(2)}"`,
+        `"${new Date(order.dProcessedOn).toLocaleDateString()}"`,
+        `"${new Date(order.dReceivedDate).toLocaleDateString()}"`,
+        `"${order.sku || ''}"`,
+        `"${order.orderQty || ''}"`,
+        `"${(order.itemTitle || '').replace(/"/g, '""')}"`,
+        `"${(order.unitValue || 0).toFixed(2)}"`,
+        `"${order.costGBP || ''}"`,
+        `"${order.shippingFreight || ''}"`,
+        `"${order.courierCharge || ''}"`,
+        `"${(order.marketplaceFee || 0).toFixed(2)}"`,
+        `"${vatDisplay}"`,
+        `"${vatA}"`,
+        `"${vatB}"`,
+        `"${(order.totalCost || 0).toFixed(2)}"`,
+        `"${(order.profit || 0).toFixed(2)}"`,
+        `"${(order.cFullName || '').replace(/"/g, '""')}"`,
+        `"${(order.cEmailAddress || '').replace(/"/g, '""')}"`,
+        `"${(order.Address1 || '').replace(/"/g, '""')}"`,
+        `"${(order.Town || '').replace(/"/g, '""')}"`,
+        `"${order.cPostCode || ''}"`,
+        `"${order.cCountry || ''}"`,
+        `"${order.BuyerPhoneNumber || ''}"`,
+        `"${order.PostalTrackingNumber || ''}"`,
+        `"${order.PostalServiceName || ''}"`,
+        `"${order.ReferenceNum || ''}"`
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    return csvRows.join('\n');
+  };
+
+  const downloadCSV = (csvContent: string, filename: string) => {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportAllOrders = async () => {
+    if (!authToken) return;
+    
+    setExportLoading(true);
+    try {
+      toast({
+        title: "Export started",
+        description: "Fetching all orders from selected date range..."
+      });
+
+      // Step 1: Fetch all orders across all pages
+      const allOrders = await fetchAllOrdersForExport();
+      
+      toast({
+        title: "Orders fetched",
+        description: `Fetched ${allOrders.length} orders. Now loading enhanced data...`
+      });
+
+      // Step 2: Fetch enhanced data for all orders
+      const ordersWithEnhancedData = await fetchEnhancedDataForAllOrders(allOrders);
+
+      // Step 3: Convert to CSV and download
+      const csvContent = convertToCSV(ordersWithEnhancedData);
+      const filename = `processed-orders-${format(filters.fromDate, 'yyyy-MM-dd')}-to-${format(filters.toDate, 'yyyy-MM-dd')}.csv`;
+      
+      downloadCSV(csvContent, filename);
+
+      toast({
+        title: "Export completed",
+        description: `Successfully exported ${ordersWithEnhancedData.length} orders to ${filename}`
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to export orders';
+      toast({
+        title: "Export failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (authToken) {
       fetchOrders();
@@ -794,6 +1017,10 @@ export default function ProcessedOrders() {
             </Button>
             <Button onClick={() => setShowEnhancedColumns(!showEnhancedColumns)} variant="outline" size="sm">
               {showEnhancedColumns ? "Hide" : "Show"} Enhanced Data
+            </Button>
+            <Button onClick={handleExportAllOrders} disabled={isLoading || exportLoading} variant="outline" className="gap-2">
+              {exportLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {exportLoading ? "Exporting..." : "Export All"}
             </Button>
           </form>
         </CardContent>
