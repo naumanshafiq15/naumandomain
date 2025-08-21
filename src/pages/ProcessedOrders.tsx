@@ -706,72 +706,35 @@ export default function ProcessedOrders() {
       'Sub Source',
       'Selling Price (Inc. VAT)',
       'Processed Date',
-      'Received Date',
       'SKU',
       'Order Qty',
-      'Item Title',
-      'Unit Value',
       'Cost £',
       'Shipping Freight £',
       'Courier Charge £',
       'Marketplace Fee £',
       'VAT £',
-      'VATA £', // For Wayfair
-      'VATB £', // For Wayfair
       'Total Cost £',
-      'Profit £',
-      'Customer Name',
-      'Email',
-      'Address',
-      'Town',
-      'Postcode',
-      'Country',
-      'Phone',
-      'Tracking Number',
-      'Postal Service',
-      'Reference Number'
+      'Profit £'
     ];
 
     const csvRows = [headers.join(',')];
 
     orders.forEach(order => {
-      const vatDisplay = order.Source === 'WAYFAIRCHANNEL' 
-        ? `${(order.vat || 0).toFixed(2)}` // VATB for Wayfair
-        : `${(order.vat || 0).toFixed(2)}`;
-
-      const vatA = order.Source === 'WAYFAIRCHANNEL' ? `${(order.vatA || 0).toFixed(2)}` : '';
-      const vatB = order.Source === 'WAYFAIRCHANNEL' ? `${(order.vat || 0).toFixed(2)}` : '';
-
       const row = [
         `"${order.nOrderId}"`,
         `"${order.Source}"`,
         `"${order.SubSource || ''}"`,
         `"${(order.fTotalCharge || 0).toFixed(2)}"`,
         `"${new Date(order.dProcessedOn).toLocaleDateString()}"`,
-        `"${new Date(order.dReceivedDate).toLocaleDateString()}"`,
         `"${order.sku || ''}"`,
         `"${order.orderQty || ''}"`,
-        `"${(order.itemTitle || '').replace(/"/g, '""')}"`,
-        `"${(order.unitValue || 0).toFixed(2)}"`,
         `"${order.costGBP || ''}"`,
         `"${order.shippingFreight || ''}"`,
         `"${order.courierCharge || ''}"`,
         `"${(order.marketplaceFee || 0).toFixed(2)}"`,
-        `"${vatDisplay}"`,
-        `"${vatA}"`,
-        `"${vatB}"`,
+        `"${(order.vat || 0).toFixed(2)}"`,
         `"${(order.totalCost || 0).toFixed(2)}"`,
-        `"${(order.profit || 0).toFixed(2)}"`,
-        `"${(order.cFullName || '').replace(/"/g, '""')}"`,
-        `"${(order.cEmailAddress || '').replace(/"/g, '""')}"`,
-        `"${(order.Address1 || '').replace(/"/g, '""')}"`,
-        `"${(order.Town || '').replace(/"/g, '""')}"`,
-        `"${order.cPostCode || ''}"`,
-        `"${order.cCountry || ''}"`,
-        `"${order.BuyerPhoneNumber || ''}"`,
-        `"${order.PostalTrackingNumber || ''}"`,
-        `"${order.PostalServiceName || ''}"`,
-        `"${order.ReferenceNum || ''}"`
+        `"${(order.profit || 0).toFixed(2)}"`
       ];
       csvRows.push(row.join(','));
     });
