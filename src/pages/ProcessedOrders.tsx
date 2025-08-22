@@ -402,11 +402,17 @@ export default function ProcessedOrders() {
       
       // Handle source filtering
       if (filters.source === "ALL") {
-        // For "ALL", exclude DIRECT orders
-        searchFilters.push({
-          SearchField: "Source",
-          SearchTerm: "DIRECT",
-          Operator: "NotEqual"
+        // For "ALL", explicitly include all known sources except DIRECT
+        const allSources = [
+          "AMAZON", "Mirakl MP", "EBAY", "Manomano hub", "OnBuy v2", 
+          "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "TESCO", "TheRange"
+        ];
+        
+        allSources.forEach(source => {
+          searchFilters.push({
+            SearchField: "Source",
+            SearchTerm: source
+          });
         });
       } else {
         // For specific source, filter normally
@@ -608,11 +614,17 @@ export default function ProcessedOrders() {
     
     // Handle source filtering
     if (filters.source === "ALL") {
-      // For "ALL", exclude DIRECT orders
-      searchFilters.push({
-        SearchField: "Source",
-        SearchTerm: "DIRECT",
-        Operator: "NotEqual"
+      // For "ALL", explicitly include all known sources except DIRECT
+      const allSources = [
+        "AMAZON", "Mirakl MP", "EBAY", "Manomano hub", "OnBuy v2", 
+        "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "TESCO", "TheRange"
+      ];
+      
+      allSources.forEach(source => {
+        searchFilters.push({
+          SearchField: "Source",
+          SearchTerm: source
+        });
       });
     } else {
       // For specific source, filter normally
