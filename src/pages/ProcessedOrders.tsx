@@ -1034,9 +1034,9 @@ export default function ProcessedOrders() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-md border max-h-[600px] overflow-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 bg-background z-10">
                 <TableRow>
                   <TableHead>Order ID</TableHead>
                   <TableHead>Source</TableHead>
