@@ -1035,26 +1035,26 @@ export default function ProcessedOrders() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border max-h-[600px] overflow-auto">
-            <Table>
-              <TableHeader className="sticky top-0 bg-background z-10">
+            <Table noWrapper>
+              <TableHeader>
                 <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Sub Source</TableHead>
-                  <TableHead>Selling Price (Inc. VAT)</TableHead>
-                  <TableHead>Processed Date</TableHead>
+                  <TableHead className="sticky top-0 bg-background/95 backdrop-blur-sm z-20 border-b">Order ID</TableHead>
+                  <TableHead className="sticky top-0 bg-background/95 backdrop-blur-sm z-20 border-b">Source</TableHead>
+                  <TableHead className="sticky top-0 bg-background/95 backdrop-blur-sm z-20 border-b">Sub Source</TableHead>
+                  <TableHead className="sticky top-0 bg-background/95 backdrop-blur-sm z-20 border-b">Selling Price (Inc. VAT)</TableHead>
+                  <TableHead className="sticky top-0 bg-background/95 backdrop-blur-sm z-20 border-b">Processed Date</TableHead>
                   {showEnhancedColumns && <>
-                      <TableHead>SKU</TableHead>
-                      <TableHead>Order Qty</TableHead>
-                      <TableHead>Cost £</TableHead>
-                      <TableHead>Shipping Freight £</TableHead>
-                      <TableHead>Courier Charge £</TableHead>
-                      <TableHead className="bg-green-200">Marketplace Fee £</TableHead>
-                      <TableHead className="bg-green-200">VAT £</TableHead>
-                      <TableHead className="bg-green-200">Total Cost £</TableHead>
-                      <TableHead className="bg-green-200">Profit £</TableHead>
+                      <TableHead className="sticky top-0 bg-background/95 backdrop-blur-sm z-20 border-b">SKU</TableHead>
+                      <TableHead className="sticky top-0 bg-background/95 backdrop-blur-sm z-20 border-b">Order Qty</TableHead>
+                      <TableHead className="sticky top-0 bg-background/95 backdrop-blur-sm z-20 border-b">Cost £</TableHead>
+                      <TableHead className="sticky top-0 bg-background/95 backdrop-blur-sm z-20 border-b">Shipping Freight £</TableHead>
+                      <TableHead className="sticky top-0 bg-background/95 backdrop-blur-sm z-20 border-b">Courier Charge £</TableHead>
+                      <TableHead className="sticky top-0 bg-green-200/95 backdrop-blur-sm z-20 border-b">Marketplace Fee £</TableHead>
+                      <TableHead className="sticky top-0 bg-green-200/95 backdrop-blur-sm z-20 border-b">VAT £</TableHead>
+                      <TableHead className="sticky top-0 bg-green-200/95 backdrop-blur-sm z-20 border-b">Total Cost £</TableHead>
+                      <TableHead className="sticky top-0 bg-green-200/95 backdrop-blur-sm z-20 border-b">Profit £</TableHead>
                     </>}
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="sticky top-0 bg-background/95 backdrop-blur-sm z-20 border-b">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
