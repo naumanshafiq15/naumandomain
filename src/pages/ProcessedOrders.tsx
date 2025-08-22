@@ -397,64 +397,112 @@ export default function ProcessedOrders() {
     if (!authToken) return;
     setIsLoading(true);
     try {
-      // Build search filters based on user input
-      const searchFilters = [];
-      
-      // Handle source filtering
+      let allOrders: ProcessedOrder[] = [];
+      let totalEntries = 0;
+      let totalPages = 0;
+
       if (filters.source === "ALL") {
-        // For "ALL", explicitly include all known sources except DIRECT
+        // For "ALL", make separate API calls for each source and combine results
         const allSources = [
           "AMAZON", "Mirakl MP", "EBAY", "Manomano hub", "OnBuy v2", 
           "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "TESCO", "TheRange"
         ];
         
-        allSources.forEach(source => {
-          searchFilters.push({
-            SearchField: "Source",
-            SearchTerm: source
-          });
+        for (const source of allSources) {
+          try {
+            const searchFilters = [{
+              SearchField: "Source",
+              SearchTerm: source
+            }];
+
+            // Add SubSource filter if specified and not "all"
+            if (filters.subSource.trim() && filters.subSource !== "all") {
+              searchFilters.push({
+                SearchField: "SubSource",
+                SearchTerm: filters.subSource
+              });
+            }
+
+            const { data, error } = await supabase.functions.invoke('linnworks-processed-orders', {
+              body: {
+                authToken,
+                searchFilters,
+                pageNumber,
+                resultsPerPage: 200,
+                fromDate: `${format(filters.fromDate, "yyyy-MM-dd")}T00:00:00`,
+                toDate: `${format(filters.toDate, "yyyy-MM-dd")}T00:00:00`
+              }
+            });
+
+            if (error) {
+              console.error(`Error fetching orders for ${source}:`, error);
+              continue; // Continue with other sources even if one fails
+            }
+
+            const response = data as ProcessedOrdersResponse;
+            if (response.ProcessedOrders && response.ProcessedOrders.Data) {
+              allOrders = [...allOrders, ...response.ProcessedOrders.Data];
+              totalEntries += response.ProcessedOrders.TotalEntries || 0;
+            }
+          } catch (err) {
+            console.error(`Error fetching orders for source ${source}:`, err);
+            // Continue with other sources
+          }
+        }
+
+        // Sort combined results by processed date (most recent first)
+        allOrders.sort((a, b) => new Date(b.dProcessedOn).getTime() - new Date(a.dProcessedOn).getTime());
+        
+        // Calculate total pages based on combined results (approximation)
+        totalPages = Math.ceil(totalEntries / 200);
+        
+        setOrders(allOrders);
+        setPagination({
+          pageNumber: pageNumber,
+          entriesPerPage: 200,
+          totalEntries: totalEntries,
+          totalPages: totalPages
         });
       } else {
-        // For specific source, filter normally
-        searchFilters.push({
+        // For specific source, make single API call
+        const searchFilters = [{
           SearchField: "Source",
           SearchTerm: filters.source
-        });
-      }
-      
-      // Add SubSource filter if specified and not "all"
-      if (filters.subSource.trim() && filters.subSource !== "all") {
-        searchFilters.push({
-          SearchField: "SubSource",
-          SearchTerm: filters.subSource
-        });
-      }
-
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('linnworks-processed-orders', {
-        body: {
-          authToken,
-          searchFilters,
-          pageNumber,
-          resultsPerPage: 200,
-          fromDate: `${format(filters.fromDate, "yyyy-MM-dd")}T00:00:00`,
-          toDate: `${format(filters.toDate, "yyyy-MM-dd")}T00:00:00`
+        }];
+        
+        // Add SubSource filter if specified and not "all"
+        if (filters.subSource.trim() && filters.subSource !== "all") {
+          searchFilters.push({
+            SearchField: "SubSource",
+            SearchTerm: filters.subSource
+          });
         }
-      });
-      if (error) {
-        throw new Error(error.message);
-      }
-      const response = data as ProcessedOrdersResponse;
-      if (response.ProcessedOrders) {
-        setOrders(response.ProcessedOrders.Data);
-        setPagination({
-          pageNumber: response.ProcessedOrders.PageNumber,
-          entriesPerPage: response.ProcessedOrders.EntriesPerPage,
-          totalEntries: response.ProcessedOrders.TotalEntries,
-          totalPages: response.ProcessedOrders.TotalPages
+
+        const { data, error } = await supabase.functions.invoke('linnworks-processed-orders', {
+          body: {
+            authToken,
+            searchFilters,
+            pageNumber,
+            resultsPerPage: 200,
+            fromDate: `${format(filters.fromDate, "yyyy-MM-dd")}T00:00:00`,
+            toDate: `${format(filters.toDate, "yyyy-MM-dd")}T00:00:00`
+          }
         });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        const response = data as ProcessedOrdersResponse;
+        if (response.ProcessedOrders) {
+          setOrders(response.ProcessedOrders.Data);
+          setPagination({
+            pageNumber: response.ProcessedOrders.PageNumber,
+            entriesPerPage: response.ProcessedOrders.EntriesPerPage,
+            totalEntries: response.ProcessedOrders.TotalEntries,
+            totalPages: response.ProcessedOrders.TotalPages
+          });
+        }
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch orders';
@@ -605,66 +653,111 @@ export default function ProcessedOrders() {
   const fetchAllOrdersForExport = async (): Promise<ProcessedOrder[]> => {
     if (!authToken) throw new Error('No auth token available');
     
-    const allOrders: ProcessedOrder[] = [];
-    let currentPage = 1;
-    let totalPages = 1;
+    let allOrders: ProcessedOrder[] = [];
 
-    // Build search filters based on user input
-    const searchFilters = [];
-    
-    // Handle source filtering
     if (filters.source === "ALL") {
-      // For "ALL", explicitly include all known sources except DIRECT
+      // For "ALL", make separate API calls for each source and combine results
       const allSources = [
         "AMAZON", "Mirakl MP", "EBAY", "Manomano hub", "OnBuy v2", 
         "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "TESCO", "TheRange"
       ];
       
-      allSources.forEach(source => {
-        searchFilters.push({
-          SearchField: "Source",
-          SearchTerm: source
-        });
-      });
-    } else {
-      // For specific source, filter normally
-      searchFilters.push({
-        SearchField: "Source",
-        SearchTerm: filters.source
-      });
-    }
-    
-    // Add SubSource filter if specified and not "all"
-    if (filters.subSource.trim() && filters.subSource !== "all") {
-      searchFilters.push({
-        SearchField: "SubSource",
-        SearchTerm: filters.subSource
-      });
-    }
+      for (const source of allSources) {
+        try {
+          let currentPage = 1;
+          let totalPages = 1;
+          
+          do {
+            const searchFilters = [{
+              SearchField: "Source",
+              SearchTerm: source
+            }];
+            
+            // Add SubSource filter if specified and not "all"
+            if (filters.subSource.trim() && filters.subSource !== "all") {
+              searchFilters.push({
+                SearchField: "SubSource",
+                SearchTerm: filters.subSource
+              });
+            }
 
-    do {
-      const { data, error } = await supabase.functions.invoke('linnworks-processed-orders', {
-        body: {
-          authToken,
-          searchFilters,
-          pageNumber: currentPage,
-          resultsPerPage: 200,
-          fromDate: `${format(filters.fromDate, "yyyy-MM-dd")}T00:00:00`,
-          toDate: `${format(filters.toDate, "yyyy-MM-dd")}T00:00:00`
+            const { data, error } = await supabase.functions.invoke('linnworks-processed-orders', {
+              body: {
+                authToken,
+                searchFilters,
+                pageNumber: currentPage,
+                resultsPerPage: 200,
+                fromDate: `${format(filters.fromDate, "yyyy-MM-dd")}T00:00:00`,
+                toDate: `${format(filters.toDate, "yyyy-MM-dd")}T00:00:00`
+              }
+            });
+
+            if (error) {
+              console.error(`Error fetching orders for ${source}:`, error);
+              break; // Move to next source
+            }
+            
+            const response = data as ProcessedOrdersResponse;
+            if (response.ProcessedOrders) {
+              allOrders.push(...response.ProcessedOrders.Data);
+              totalPages = response.ProcessedOrders.TotalPages;
+              currentPage++;
+            } else {
+              break;
+            }
+          } while (currentPage <= totalPages);
+          
+        } catch (err) {
+          console.error(`Error fetching export data for source ${source}:`, err);
+          // Continue with other sources
         }
-      });
-
-      if (error) throw new Error(error.message);
-      
-      const response = data as ProcessedOrdersResponse;
-      if (response.ProcessedOrders) {
-        allOrders.push(...response.ProcessedOrders.Data);
-        totalPages = response.ProcessedOrders.TotalPages;
-        currentPage++;
-      } else {
-        break;
       }
-    } while (currentPage <= totalPages);
+      
+      // Sort combined results by processed date (most recent first)
+      allOrders.sort((a, b) => new Date(b.dProcessedOn).getTime() - new Date(a.dProcessedOn).getTime());
+      
+    } else {
+      // For specific source, use original pagination approach
+      let currentPage = 1;
+      let totalPages = 1;
+
+      do {
+        const searchFilters = [{
+          SearchField: "Source",
+          SearchTerm: filters.source
+        }];
+        
+        // Add SubSource filter if specified and not "all"
+        if (filters.subSource.trim() && filters.subSource !== "all") {
+          searchFilters.push({
+            SearchField: "SubSource",
+            SearchTerm: filters.subSource
+          });
+        }
+
+        const { data, error } = await supabase.functions.invoke('linnworks-processed-orders', {
+          body: {
+            authToken,
+            searchFilters,
+            pageNumber: currentPage,
+            resultsPerPage: 200,
+            fromDate: `${format(filters.fromDate, "yyyy-MM-dd")}T00:00:00`,
+            toDate: `${format(filters.toDate, "yyyy-MM-dd")}T00:00:00`
+          }
+        });
+
+        if (error) throw new Error(error.message);
+        
+        const response = data as ProcessedOrdersResponse;
+        if (response.ProcessedOrders) {
+          allOrders.push(...response.ProcessedOrders.Data);
+          totalPages = response.ProcessedOrders.TotalPages;
+          currentPage++;
+        } else {
+          break;
+        }
+      } while (currentPage <= totalPages);
+    }
 
     return allOrders;
   };
