@@ -400,15 +400,8 @@ export default function ProcessedOrders() {
       // Build search filters based on user input
       const searchFilters = [];
       
-      if (filters.source === "ALL") {
-        // When ALL is selected, exclude DIRECT orders
-        searchFilters.push({
-          SearchField: "Source",
-          SearchTerm: "DIRECT",
-          Operator: "NotEqual" // Exclude DIRECT
-        });
-      } else if (filters.source !== "ALL") {
-        // For specific source selection
+      // Only add source filter if not "ALL"
+      if (filters.source !== "ALL") {
         searchFilters.push({
           SearchField: "Source",
           SearchTerm: filters.source
@@ -605,15 +598,8 @@ export default function ProcessedOrders() {
     // Build search filters based on user input
     const searchFilters = [];
     
-    if (filters.source === "ALL") {
-      // When ALL is selected for export, exclude DIRECT orders
-      searchFilters.push({
-        SearchField: "Source",
-        SearchTerm: "DIRECT",
-        Operator: "NotEqual" // Exclude DIRECT
-      });
-    } else if (filters.source !== "ALL") {
-      // For specific source selection
+    // Only add source filter if not "ALL"
+    if (filters.source !== "ALL") {
       searchFilters.push({
         SearchField: "Source",
         SearchTerm: filters.source
@@ -987,7 +973,6 @@ export default function ProcessedOrders() {
                 </SelectTrigger>
                  <SelectContent className="bg-background z-50">
                    <SelectItem value="ALL">ALL</SelectItem>
-                   <SelectItem value="DIRECT">DIRECT</SelectItem>
                    <SelectItem value="AMAZON">AMAZON</SelectItem>
                    <SelectItem value="Mirakl MP">Mirakl MP</SelectItem>
                    <SelectItem value="EBAY">EBAY</SelectItem>
