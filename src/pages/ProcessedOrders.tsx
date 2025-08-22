@@ -400,8 +400,16 @@ export default function ProcessedOrders() {
       // Build search filters based on user input
       const searchFilters = [];
       
-      // Only add source filter if not "ALL"
-      if (filters.source !== "ALL") {
+      // Handle source filtering
+      if (filters.source === "ALL") {
+        // For "ALL", exclude DIRECT orders
+        searchFilters.push({
+          SearchField: "Source",
+          SearchTerm: "DIRECT",
+          Operator: "NotEqual"
+        });
+      } else {
+        // For specific source, filter normally
         searchFilters.push({
           SearchField: "Source",
           SearchTerm: filters.source
@@ -598,8 +606,16 @@ export default function ProcessedOrders() {
     // Build search filters based on user input
     const searchFilters = [];
     
-    // Only add source filter if not "ALL"
-    if (filters.source !== "ALL") {
+    // Handle source filtering
+    if (filters.source === "ALL") {
+      // For "ALL", exclude DIRECT orders
+      searchFilters.push({
+        SearchField: "Source",
+        SearchTerm: "DIRECT",
+        Operator: "NotEqual"
+      });
+    } else {
+      // For specific source, filter normally
       searchFilters.push({
         SearchField: "Source",
         SearchTerm: filters.source
