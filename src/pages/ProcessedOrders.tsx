@@ -120,7 +120,7 @@ export default function ProcessedOrders() {
   const [filters, setFilters] = useState({
     fromDate: new Date("2025-05-01"),
     toDate: new Date("2025-09-01"),
-    source: "DIRECT",
+    source: "ALL",
     subSource: "all"
   });
   const {
@@ -398,10 +398,15 @@ export default function ProcessedOrders() {
     setIsLoading(true);
     try {
       // Build search filters based on user input
-      const searchFilters = [{
-        SearchField: "Source",
-        SearchTerm: filters.source
-      }];
+      const searchFilters = [];
+      
+      // Only add source filter if not "ALL"
+      if (filters.source !== "ALL") {
+        searchFilters.push({
+          SearchField: "Source",
+          SearchTerm: filters.source
+        });
+      }
       
       // Add SubSource filter if specified and not "all"
       if (filters.subSource.trim() && filters.subSource !== "all") {
@@ -591,10 +596,15 @@ export default function ProcessedOrders() {
     let totalPages = 1;
 
     // Build search filters based on user input
-    const searchFilters = [{
-      SearchField: "Source",
-      SearchTerm: filters.source
-    }];
+    const searchFilters = [];
+    
+    // Only add source filter if not "ALL"
+    if (filters.source !== "ALL") {
+      searchFilters.push({
+        SearchField: "Source",
+        SearchTerm: filters.source
+      });
+    }
     
     // Add SubSource filter if specified and not "all"
     if (filters.subSource.trim() && filters.subSource !== "all") {
@@ -961,22 +971,22 @@ export default function ProcessedOrders() {
                 <SelectTrigger>
                   <SelectValue placeholder="Select source" />
                 </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  <SelectItem value="DIRECT">DIRECT</SelectItem>
-                  <SelectItem value="AMAZON">AMAZON</SelectItem>
-                  <SelectItem value="Mirakl MP">Mirakl MP</SelectItem>
-                  <SelectItem value="EBAY">EBAY</SelectItem>
-                  <SelectItem value="Manomano hub">Manomano hub</SelectItem>
-                  <SelectItem value="OnBuy v2">OnBuy v2</SelectItem>
-                  <SelectItem value="VIRTUALSTOCK">VIRTUALSTOCK</SelectItem>
-                  <SelectItem value="SHEIN">SHEIN</SelectItem>
-                  <SelectItem value="SHOPIFY">SHOPIFY</SelectItem>
-                  <SelectItem value="TESCO">TESCO</SelectItem>
-                  <SelectItem value="TheRange">TheRange</SelectItem>
-                  <SelectItem value="TikTok">TikTok</SelectItem>
-                  <SelectItem value="WAYFAIRCHANNEL">WAYFAIRCHANNEL</SelectItem>
-                  <SelectItem value="GROUPON">GROUPON</SelectItem>
-                </SelectContent>
+                 <SelectContent className="bg-background z-50">
+                   <SelectItem value="ALL">ALL</SelectItem>
+                   <SelectItem value="AMAZON">AMAZON</SelectItem>
+                   <SelectItem value="Mirakl MP">Mirakl MP</SelectItem>
+                   <SelectItem value="EBAY">EBAY</SelectItem>
+                   <SelectItem value="Manomano hub">Manomano hub</SelectItem>
+                   <SelectItem value="OnBuy v2">OnBuy v2</SelectItem>
+                   <SelectItem value="VIRTUALSTOCK">VIRTUALSTOCK</SelectItem>
+                   <SelectItem value="SHEIN">SHEIN</SelectItem>
+                   <SelectItem value="SHOPIFY">SHOPIFY</SelectItem>
+                   <SelectItem value="TESCO">TESCO</SelectItem>
+                   <SelectItem value="TheRange">TheRange</SelectItem>
+                   <SelectItem value="TikTok">TikTok</SelectItem>
+                   <SelectItem value="WAYFAIRCHANNEL">WAYFAIRCHANNEL</SelectItem>
+                   <SelectItem value="GROUPON">GROUPON</SelectItem>
+                 </SelectContent>
               </Select>
             </div>
             {(filters.source === "VIRTUALSTOCK" || filters.source === "Mirakl MP") && (
