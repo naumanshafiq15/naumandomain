@@ -405,7 +405,7 @@ export default function ProcessedOrders() {
         // For "ALL", make separate API calls for each source and combine results
         const allSources = [
           "AMAZON", "Mirakl MP", "EBAY", "Manomano hub", "OnBuy v2", 
-          "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "TESCO", "TheRange",
+          "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "TESCO", "TheRange", "TIKTOK", "WAYFAIRCHANNEL"
         ];
         
         for (const source of allSources) {
@@ -659,7 +659,7 @@ export default function ProcessedOrders() {
       // For "ALL", make separate API calls for each source and combine results
       const allSources = [
         "AMAZON", "Mirakl MP", "EBAY", "Manomano hub", "OnBuy v2", 
-          "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "TESCO", "TheRange"
+        "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "TESCO", "TheRange", "TIKTOK", "WAYFAIRCHANNEL"
       ];
       
       for (const source of allSources) {
