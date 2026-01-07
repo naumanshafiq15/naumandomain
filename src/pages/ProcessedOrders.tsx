@@ -1137,6 +1137,7 @@ export default function ProcessedOrders() {
                       <>
                         <SelectItem value="B&Q">B&Q</SelectItem>
                         <SelectItem value="Debenhams">Debenhams</SelectItem>
+                        <SelectItem value="Tesco">Tesco</SelectItem>
 
                       </>
                     )}
