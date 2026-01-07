@@ -301,9 +301,9 @@ export default function ProcessedOrders() {
       } else if (order.SubSource?.toLowerCase().includes('debenhams')) {
         marketplaceFeeRate = parseFloat(result.debenhamsFee || '0');
         feeType = 'Debenhams';
-      } else if (order.SubSource?.toLowerCase().includes('tesco')) {
-  marketplaceFeeRate = parseFloat(result.tescoFee || '0');
-  feeType = 'Tesco';
+     // } else if (order.SubSource?.toLowerCase().includes('tesco')) {
+  //marketplaceFeeRate = parseFloat(result.tescoFee || '0');
+//  feeType = 'Tesco';
 }
     
       
