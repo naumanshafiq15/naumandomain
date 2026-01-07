@@ -294,14 +294,19 @@ export default function ProcessedOrders() {
       // Determine marketplace fee based on SubSource
       let marketplaceFeeRate = 0;
       let feeType = '';
-      
+    
       if (order.SubSource?.toLowerCase().includes('b&q')) {
         marketplaceFeeRate = parseFloat(result.bqFee || '0');
         feeType = 'B&Q';
       } else if (order.SubSource?.toLowerCase().includes('debenhams')) {
         marketplaceFeeRate = parseFloat(result.debenhamsFee || '0');
         feeType = 'Debenhams';
-      }
+      } else if (order.SubSource?.toLowerCase().includes('tesco')) {
+  marketplaceFeeRate = parseFloat(result.tescoFee || '0');
+  feeType = 'Tesco';
+}
+    
+      
       
       // Marketplace Fee = Selling Price (Inc. VAT) × Fee Rate
       const marketplaceFee = sellingPriceIncVat * marketplaceFeeRate;
