@@ -152,7 +152,7 @@ serve(async (req) => {
               const propName = property.ProperyName;
               const propValue = property.PropertyValue;
               
-              if (propName === "Z-Cost £ / Account Only") {
+              if (propName === "Z-Cost-Pound") {
                 costGBP = propValue;
               } else if (propName === "Z-Shipping Freight / Account Only") {
                 shippingFreight = propValue;
