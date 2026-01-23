@@ -87,7 +87,6 @@ interface EnhancedOrderResult {
   onbuyFee?: string;
   sheinFee?: string;
   shopifyFee?: string;
-  WOOCOMMERCEFee?: string;
   tescoFee?: string;
   theRangeFee?: string;
   tiktokFee?: string;
