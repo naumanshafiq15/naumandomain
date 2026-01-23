@@ -87,6 +87,7 @@ interface EnhancedOrderResult {
   onbuyFee?: string;
   sheinFee?: string;
   shopifyFee?: string;
+  WOOCOMMERCEFee?: string;
   tescoFee?: string;
   theRangeFee?: string;
   tiktokFee?: string;
@@ -145,6 +146,7 @@ export default function ProcessedOrders() {
       onbuyFee: result.onbuyFee,
       sheinFee: result.sheinFee,
       shopifyFee: result.shopifyFee,
+      WOOCOMMERCEFee: result.WOOCOMMERCEFee,
       tescoFee: result.tescoFee,
       theRangeFee: result.theRangeFee,
       tiktokFee: result.tiktokFee,
@@ -352,6 +354,7 @@ export default function ProcessedOrders() {
       'ONBUY': result.onbuyFee,
       'SHEIN': result.sheinFee,
       'SHOPIFY': result.shopifyFee,
+      'WOOCOMMERCE': result.WOOCOMMERCEFee,
       'TESCO': result.tescoFee,
       'THERANGE': result.theRangeFee,
       'TIKTOK': result.tiktokFee,
@@ -664,7 +667,7 @@ export default function ProcessedOrders() {
       // For "ALL", make separate API calls for each source and combine results
       const allSources = [
         "AMAZON", "Mirakl MP", "EBAY", "Manomano hub", "OnBuy v2", 
-        "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "TESCO", "TheRange", "TIKTOK", "WAYFAIRCHANNEL", "GROUPON"
+        "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "WOOCOMMERCE", "TESCO", "TheRange", "TIKTOK", "WAYFAIRCHANNEL", "GROUPON"
       ];
       
       for (const source of allSources) {
@@ -1107,6 +1110,7 @@ export default function ProcessedOrders() {
                    <SelectItem value="VIRTUALSTOCK">VIRTUALSTOCK</SelectItem>
                    <SelectItem value="SHEIN">SHEIN</SelectItem>
                    <SelectItem value="SHOPIFY">SHOPIFY</SelectItem>
+                   <SelectItem value="WOOCOMMERCE">WOOCOMMERCE</SelectItem>
                    <SelectItem value="TESCO">TESCO</SelectItem>
                    <SelectItem value="TheRange">TheRange</SelectItem>
                    <SelectItem value="TikTok">TikTok</SelectItem>
