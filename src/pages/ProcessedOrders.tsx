@@ -354,7 +354,7 @@ export default function ProcessedOrders() {
       'ONBUY': result.onbuyFee,
       'SHEIN': result.sheinFee,
       'SHOPIFY': result.shopifyFee,
-      'WOOCOMMERCE': result.WOOCOMMERCEFee,
+      'WOOCOMMERCE': result.shopifyFee,
       'TESCO': result.tescoFee,
       'THERANGE': result.theRangeFee,
       'TIKTOK': result.tiktokFee,
@@ -413,7 +413,7 @@ export default function ProcessedOrders() {
         // For "ALL", make separate API calls for each source and combine results
         const allSources = [
           "AMAZON", "Mirakl MP", "EBAY", "Manomano hub", "OnBuy v2", 
-          "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "TESCO", "TheRange", "TIKTOK", "WAYFAIRCHANNEL", "GROUPON"
+          "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "WOOCOMMERCE", "TESCO", "TheRange", "TIKTOK", "WAYFAIRCHANNEL", "GROUPON"
         ];
         
         for (const source of allSources) {
