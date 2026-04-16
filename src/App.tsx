@@ -16,16 +16,54 @@ const queryClient = new QueryClient();
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const signIn = async () => {
+  const signInWithPassword = async () => {
+    if (!email || !password) {
+      alert("Please enter your email and password");
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
+    setLoading(false);
+
     if (error) {
       alert(error.message);
     }
+  };
+
+  const sendMagicLink = async () => {
+    if (!email) {
+      alert("Please enter your email");
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: "https://app.kosykoala.co.uk",
+      },
+    });
+
+    setLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    setMessage("Magic link sent. Please check your email.");
   };
 
   return (
@@ -33,13 +71,13 @@ const LoginScreen = () => {
       <div className="w-full max-w-md rounded-lg border bg-background p-6 shadow-sm">
         <h1 className="text-2xl font-bold mb-2">Login Required</h1>
         <p className="text-sm text-muted-foreground mb-6">
-          Sign in to access Linnworks Insight Hub.
+          Sign in with your password or request a magic link by email.
         </p>
 
         <div className="space-y-4">
           <input
             type="email"
-            placeholder="Email"
+            placeholder="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-md border px-3 py-2"
@@ -54,11 +92,24 @@ const LoginScreen = () => {
           />
 
           <button
-            onClick={signIn}
-            className="w-full rounded-md bg-black text-white py-2"
+            onClick={signInWithPassword}
+            disabled={loading}
+            className="w-full rounded-md bg-black text-white py-2 disabled:opacity-50"
           >
-            Login
+            {loading ? "Please wait..." : "Login with password"}
           </button>
+
+          <button
+            onClick={sendMagicLink}
+            disabled={loading}
+            className="w-full rounded-md border py-2 disabled:opacity-50"
+          >
+            {loading ? "Please wait..." : "Send magic link"}
+          </button>
+
+          {message && (
+            <p className="text-sm text-muted-foreground">{message}</p>
+          )}
         </div>
       </div>
     </div>
