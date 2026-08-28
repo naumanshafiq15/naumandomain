@@ -1,47 +1,49 @@
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthProvider, useAuth } from "@/contexts/auth-context";
+import { isAdminUser } from "@/lib/auth";
 import Index from "./pages/Index";
 import ProcessedOrders from "./pages/ProcessedOrders";
 import ProfitCalculator from "./pages/ProfitCalculator";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const sendMagicLink = async () => {
-    if (!email) {
-      alert("Please enter your email");
+  const handleLogin = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!email.trim() || !password) {
+      setError("Enter your email and password.");
       return;
     }
 
     setLoading(true);
-    setMessage("");
+    setError("");
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: "https://app.kosykoala.co.uk",
-      },
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
     });
 
     setLoading(false);
 
-    if (error) {
-      alert(error.message);
-      return;
+    if (signInError) {
+      setError(signInError.message);
     }
-
-    setMessage("Magic link sent. Please check your email.");
   };
 
   return (
@@ -49,32 +51,57 @@ const LoginScreen = () => {
       <div className="w-full max-w-md rounded-lg border bg-background p-6 shadow-sm">
         <h1 className="text-2xl font-bold mb-2">Login Required</h1>
         <p className="text-sm text-muted-foreground mb-6">
-          Enter your email and we’ll send you a magic link to sign in.
+          Sign in with the email and password provided by the admin.
         </p>
 
-        <div className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
             placeholder="Email address"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(event) => setEmail(event.target.value)}
             className="w-full rounded-md border px-3 py-2"
+            autoComplete="email"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="w-full rounded-md border px-3 py-2"
+            autoComplete="current-password"
+            required
           />
 
           <button
-            onClick={sendMagicLink}
+            type="submit"
             disabled={loading}
             className="w-full rounded-md bg-black text-white py-2 disabled:opacity-50"
           >
-            {loading ? "Sending..." : "Send magic link"}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
 
-          {message && (
-            <p className="text-sm text-muted-foreground">{message}</p>
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
           )}
-        </div>
+        </form>
       </div>
     </div>
+  );
+};
+
+const AdminRoute = () => {
+  const { isAdmin } = useAuth();
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <DashboardLayout>
+      <Admin />
+    </DashboardLayout>
   );
 };
 
@@ -131,6 +158,7 @@ const ProtectedApp = () => (
               </DashboardLayout>
             }
           />
+          <Route path="/admin" element={<AdminRoute />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
@@ -139,7 +167,7 @@ const ProtectedApp = () => (
 );
 
 const App = () => {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -150,8 +178,8 @@ const App = () => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
       setLoading(false);
     });
 
@@ -168,7 +196,17 @@ const App = () => {
     return <LoginScreen />;
   }
 
-  return <ProtectedApp />;
+  return (
+    <AuthProvider
+      value={{
+        session,
+        user: session.user,
+        isAdmin: isAdminUser(session.user),
+      }}
+    >
+      <ProtectedApp />
+    </AuthProvider>
+  );
 };
 
 export default App;
