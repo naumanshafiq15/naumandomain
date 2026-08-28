@@ -302,10 +302,13 @@ export default function ProcessedOrders() {
       } else if (order.SubSource?.toLowerCase().includes('debenhams')) {
         marketplaceFeeRate = parseFloat(result.debenhamsFee || '0');
         feeType = 'Debenhams';
-     // } else if (order.SubSource?.toLowerCase().includes('tesco')) {
-  //marketplaceFeeRate = parseFloat(result.tescoFee || '0');
-//  feeType = 'Tesco';
-}
+      } else if (order.SubSource?.toLowerCase().includes('tesco')) {
+        marketplaceFeeRate = parseFloat(result.tescoFee || '0');
+        feeType = 'Tesco';
+      } else if (order.SubSource?.toLowerCase().includes('the range')) {
+        marketplaceFeeRate = parseFloat(result.theRangeFee || '0');
+        feeType = 'The Range';
+      }
     
       
       
@@ -354,8 +357,6 @@ export default function ProcessedOrders() {
       'SHEIN': result.sheinFee,
       'SHOPIFY': result.shopifyFee,
       'WOOCOMMERCE': result.shopifyFee,
-      'TESCO': result.tescoFee,
-      'THERANGE': result.theRangeFee,
       'TIKTOK': result.tiktokFee,
       
       // Additional exact mappings from actual API responses
@@ -363,7 +364,6 @@ export default function ProcessedOrders() {
       'Manomano HUB': result.manomanoFee,
       'OnBuy v2': result.onbuyFee,
       'TikTok': result.tiktokFee,
-      'TheRange': result.theRangeFee,
       'Debenhams': result.debenhamsFee,
       'Mirakl MP': result.manomanoFee, // Mirakl MP appears to be related to Manomano
       
@@ -412,7 +412,7 @@ export default function ProcessedOrders() {
         // For "ALL", make separate API calls for each source and combine results
         const allSources = [
           "AMAZON", "Mirakl MP", "EBAY", "Manomano hub", "OnBuy v2", 
-          "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "WOOCOMMERCE", "TESCO", "TheRange", "TIKTOK", "WAYFAIRCHANNEL", "GROUPON"
+          "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "WOOCOMMERCE", "TIKTOK", "WAYFAIRCHANNEL", "GROUPON"
         ];
         
         for (const source of allSources) {
@@ -666,7 +666,7 @@ export default function ProcessedOrders() {
       // For "ALL", make separate API calls for each source and combine results
       const allSources = [
         "AMAZON", "Mirakl MP", "EBAY", "Manomano hub", "OnBuy v2", 
-        "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "WOOCOMMERCE", "TESCO", "TheRange", "TIKTOK", "WAYFAIRCHANNEL", "GROUPON"
+        "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "WOOCOMMERCE", "TIKTOK", "WAYFAIRCHANNEL", "GROUPON"
       ];
       
       for (const source of allSources) {
@@ -1110,8 +1110,6 @@ export default function ProcessedOrders() {
                    <SelectItem value="SHEIN">SHEIN</SelectItem>
                    <SelectItem value="SHOPIFY">SHOPIFY</SelectItem>
                    <SelectItem value="WOOCOMMERCE">WOOCOMMERCE</SelectItem>
-                   <SelectItem value="TESCO">TESCO</SelectItem>
-                   <SelectItem value="TheRange">TheRange</SelectItem>
                    <SelectItem value="TikTok">TikTok</SelectItem>
                    <SelectItem value="WAYFAIRCHANNEL">WAYFAIRCHANNEL</SelectItem>
                    <SelectItem value="GROUPON">GROUPON</SelectItem>
@@ -1141,7 +1139,7 @@ export default function ProcessedOrders() {
                         <SelectItem value="B&Q">B&Q</SelectItem>
                         <SelectItem value="Debenhams">Debenhams</SelectItem>
                         <SelectItem value="Tesco">Tesco</SelectItem>
-
+                        <SelectItem value="The Range">The Range</SelectItem>
                       </>
                     )}
                   </SelectContent>

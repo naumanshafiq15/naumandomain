@@ -45,8 +45,8 @@ interface MonthlyProfitData {
 
 const sources = [
   "DIRECT", "AMAZON", "Mirakl MP", "EBAY", "Manomano hub", 
-  "OnBuy v2", "VIRTUALSTOCK", "SHEIN", "SHOPIFY", "TESCO", 
-  "TheRange", "TikTok", "WAYFAIRCHANNEL"
+  "OnBuy v2", "VIRTUALSTOCK", "SHEIN", "SHOPIFY", 
+  "TikTok", "WAYFAIRCHANNEL"
 ];
 
 const COST_PERCENTAGE = 0.70; // 70% cost, 30% profit margin
