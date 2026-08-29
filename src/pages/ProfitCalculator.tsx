@@ -49,6 +49,8 @@ const sources = [
   "TikTok", "WAYFAIRCHANNEL"
 ];
 
+const MIRAKL_SUB_SOURCES = ["B&Q", "Debenhams", "Tesco", "The Range"];
+
 const COST_PERCENTAGE = 0.70; // 70% cost, 30% profit margin
 
 // Generate month options for the last 24 months
@@ -74,6 +76,7 @@ export default function ProfitCalculator() {
     fromMonth: "2025-01",
     toMonth: "2025-12",
     selectedSources: ["AMAZON"] as string[], // Start with just Amazon
+    miraklSubSource: "all",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [currentlyFetching, setCurrentlyFetching] = useState<string>("");
@@ -101,15 +104,24 @@ export default function ProfitCalculator() {
 
         // Fetch all pages within the date range
         while (hasMorePages) {
+          const searchFilters = [
+            {
+              SearchField: "Source",
+              SearchTerm: source
+            }
+          ];
+
+          if (source === "Mirakl MP" && filters.miraklSubSource !== "all") {
+            searchFilters.push({
+              SearchField: "SubSource",
+              SearchTerm: filters.miraklSubSource
+            });
+          }
+
           const { data, error } = await supabase.functions.invoke('linnworks-processed-orders', {
             body: {
               authToken,
-              searchFilters: [
-                {
-                  SearchField: "Source",
-                  SearchTerm: source
-                }
-              ],
+              searchFilters,
               pageNumber,
               resultsPerPage: 200,
               fromDate: `${filters.fromMonth}-01T00:00:00`,
@@ -168,7 +180,9 @@ export default function ProfitCalculator() {
       
       const orderDate = new Date(order.dProcessedOn);
       const month = orderDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-      const source = order.Source;
+      const source = order.Source === "Mirakl MP" && order.SubSource
+        ? order.SubSource
+        : order.Source;
       const key = `${source}-${month}`;
 
       const subtotal = parseFloat(order.Subtotal) || 0;
@@ -197,7 +211,20 @@ export default function ProfitCalculator() {
     const fromDate = new Date(filters.fromMonth + "-01");
     const toDate = new Date(filters.toMonth + "-01");
     
+    const groupsToFill: string[] = [];
     filters.selectedSources.forEach(source => {
+      if (source === "Mirakl MP") {
+        if (filters.miraklSubSource !== "all") {
+          groupsToFill.push(filters.miraklSubSource);
+        } else {
+          groupsToFill.push(...MIRAKL_SUB_SOURCES);
+        }
+      } else {
+        groupsToFill.push(source);
+      }
+    });
+
+    groupsToFill.forEach(source => {
       let currentDate = new Date(fromDate);
       
       while (currentDate <= toDate) {
@@ -373,7 +400,8 @@ export default function ProfitCalculator() {
                         } else if (!e.target.checked) {
                           setFilters(prev => ({ 
                             ...prev, 
-                            selectedSources: prev.selectedSources.filter(s => s !== source) 
+                            selectedSources: prev.selectedSources.filter(s => s !== source),
+                            miraklSubSource: source === "Mirakl MP" ? "all" : prev.miraklSubSource
                           }));
                         }
                       }}
@@ -387,6 +415,28 @@ export default function ProfitCalculator() {
                 ))}
               </div>
             </div>
+
+            {filters.selectedSources.includes("Mirakl MP") && (
+              <div className="grid w-full max-w-sm items-center gap-1.5">
+                <Label htmlFor="miraklSubSource">Sub Source</Label>
+                <Select
+                  value={filters.miraklSubSource}
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, miraklSubSource: value }))}
+                >
+                  <SelectTrigger id="miraklSubSource">
+                    <SelectValue placeholder="Select sub source" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="all">All Sub Sources</SelectItem>
+                    {MIRAKL_SUB_SOURCES.map((subSource) => (
+                      <SelectItem key={subSource} value={subSource}>
+                        {subSource}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             
             <Button type="submit" disabled={isLoading || filters.selectedSources.length === 0}>
               {isLoading ? (
