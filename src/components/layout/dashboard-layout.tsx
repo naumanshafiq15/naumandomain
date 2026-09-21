@@ -23,12 +23,20 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         <div className="flex items-center gap-2">
           {isAdmin && (
-            <Link
-              to="/admin"
-              className="rounded-md border px-3 py-1 text-sm hover:bg-muted"
-            >
-              Admin
-            </Link>
+            <>
+              <Link
+                to="/admin"
+                className="rounded-md border px-3 py-1 text-sm hover:bg-muted"
+              >
+                Admin
+              </Link>
+              <Link
+                to="/settings"
+                className="rounded-md border px-3 py-1 text-sm hover:bg-muted"
+              >
+                Settings
+              </Link>
+            </>
           )}
           <button
             onClick={handleLogout}

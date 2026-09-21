@@ -1,18 +1,51 @@
-import { FormEvent, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { FormEvent, useEffect, useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
+import { invokeFunction } from "@/lib/functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
+type AdminUser = {
+  id: string;
+  email?: string;
+  role: string;
+  createdAt?: string;
+};
+
 export default function Admin() {
+  const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [createdEmail, setCreatedEmail] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const loadUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const data = await invokeFunction<{ users: AdminUser[] }>("admin-list-users");
+      setUsers(data.users || []);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load users";
+      toast({
+        title: "Could not load users",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
   const handleCreateUser = async (event: FormEvent) => {
     event.preventDefault();
@@ -49,26 +82,10 @@ export default function Admin() {
     setCreatedEmail(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("admin-create-user", {
-        body: { email: trimmedEmail, password },
+      const data = await invokeFunction<{ email?: string }>("admin-create-user", {
+        email: trimmedEmail,
+        password,
       });
-
-      if (error) {
-        let message = error.message;
-        try {
-          const body = await (error as { context?: Response }).context?.json();
-          if (body?.error) {
-            message = body.error;
-          }
-        } catch {
-          // Keep the original error message if the response body is not JSON.
-        }
-        throw new Error(message);
-      }
-
-      if (data?.error) {
-        throw new Error(data.error);
-      }
 
       setCreatedEmail(data?.email ?? trimmedEmail);
       setEmail("");
@@ -78,6 +95,7 @@ export default function Admin() {
         title: "User created",
         description: `Login is ready for ${data?.email ?? trimmedEmail}.`,
       });
+      await loadUsers();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create user";
       toast({
@@ -90,8 +108,36 @@ export default function Admin() {
     }
   };
 
+  const handleDeleteUser = async (target: AdminUser) => {
+    if (!target.id) return;
+    if (target.id === user.id) return;
+    if (target.role === "admin") return;
+
+    const confirmed = window.confirm(`Delete ${target.email || "this user"}? They will no longer be able to sign in.`);
+    if (!confirmed) return;
+
+    setDeletingId(target.id);
+    try {
+      await invokeFunction("admin-delete-user", { userId: target.id });
+      toast({
+        title: "User deleted",
+        description: `${target.email || "User"} can no longer sign in.`,
+      });
+      await loadUsers();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to delete user";
+      toast({
+        title: "Could not delete user",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
-    <div className="max-w-lg">
+    <div className="max-w-2xl space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Create user</CardTitle>
@@ -148,6 +194,51 @@ export default function Admin() {
               Created <span className="font-medium text-foreground">{createdEmail}</span>.
               Give them this email and the password you set.
             </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Users</CardTitle>
+          <CardDescription>
+            Delete a user to stop them signing in.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {usersLoading ? (
+            <p className="text-sm text-muted-foreground">Loading users...</p>
+          ) : users.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No users found.</p>
+          ) : (
+            <div className="divide-y rounded-md border">
+              {users.map((item) => {
+                const isSelf = item.id === user.id;
+                const isAdmin = item.role === "admin";
+                const canDelete = !isSelf && !isAdmin;
+
+                return (
+                  <div key={item.id} className="flex items-center justify-between gap-4 px-3 py-3">
+                    <div>
+                      <p className="text-sm font-medium">{item.email || item.id}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isAdmin ? "Admin" : "User"}
+                        {isSelf ? " · you" : ""}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={!canDelete || deletingId === item.id}
+                      onClick={() => handleDeleteUser(item)}
+                    >
+                      {deletingId === item.id ? "Deleting..." : "Delete"}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>

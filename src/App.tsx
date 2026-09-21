@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -13,6 +13,7 @@ import Index from "./pages/Index";
 import ProcessedOrders from "./pages/ProcessedOrders";
 import ProfitCalculator from "./pages/ProfitCalculator";
 import Admin from "./pages/Admin";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -91,18 +92,14 @@ const LoginScreen = () => {
   );
 };
 
-const AdminRoute = () => {
+const AdminRoute = ({ children }: { children: ReactNode }) => {
   const { isAdmin } = useAuth();
 
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
 
-  return (
-    <DashboardLayout>
-      <Admin />
-    </DashboardLayout>
-  );
+  return <DashboardLayout>{children}</DashboardLayout>;
 };
 
 const ProtectedApp = () => (
@@ -158,7 +155,8 @@ const ProtectedApp = () => (
               </DashboardLayout>
             }
           />
-          <Route path="/admin" element={<AdminRoute />} />
+          <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+          <Route path="/settings" element={<AdminRoute><Settings /></AdminRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
